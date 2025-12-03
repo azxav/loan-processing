@@ -1,0 +1,25 @@
+"Document Type","Format","Purpose in MVP","Key Fields to Extract"
+"1. National ID / Passport","JPEG/PDF","KYC & Fraud Check
+Proves the applicant exists and is who they say they are.","
+- Full Name
+- ID Number
+- Date of Birth
+- Expiry Date"
+"2. Bank Statement (3 Months)","PDF","Cash Flow Analysis
+The core of your ""AI Agent"" analysis. Used to find income, recurring debts, and risky behavior.","
+- Account Holder Name
+- Transaction Dates
+- Descriptions (e.g., ""Payroll"", ""Uber"", ""Loan Repayment"")
+- Credits (Deposits) vs. Debits"
+"3. Payslip (Latest Month)","PDF","Income Verification
+Acts as the ""truth"" source to validate the bank statement deposits.","
+- Employer Name
+- Gross Salary
+- Net Pay
+- Pay Period"
+"4. Loan Application Form","JSON/PDF","Intent & Structured Data
+Contains the customer'sclaim(e.g., ""I earn $5,000/mo""). Your system validates this claim against the docs above.","
+- Requested Amount
+- Stated Income
+- Purpose of Loan
+- Self-reported Address"

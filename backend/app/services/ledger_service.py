@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.models import models
+from backend.app.models import models
 
 class LedgerService:
     def record_transaction(self, db: Session, account_id: str, amount: float, direction: str, description: str):

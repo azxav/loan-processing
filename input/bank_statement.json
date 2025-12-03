@@ -1,0 +1,171 @@
+{
+    "document_type": "BANK_STATEMENT",
+    "account": {
+        "bank_name": "Springfield National Bank",
+        "account_holder_name": "Alex Johnson",
+        "account_number_masked": "*****4321",
+        "iban": null,
+        "currency": "USD"
+    },
+    "statement_period": {
+        "start_date": "2025-09-01",
+        "end_date": "2025-11-30"
+    },
+    "opening_balance": 1200.0,
+    "closing_balance": 1850.5,
+    "transactions": [
+        {
+            "transaction_id": "TX-2025-09-01-001",
+            "date": "2025-09-01",
+            "description": "Direct Deposit - Acme Technologies Inc. Payroll",
+            "category": "INCOME_SALARY",
+            "amount": 4800.0,
+            "direction": "CREDIT",
+            "running_balance": 6000.0
+        },
+        {
+            "transaction_id": "TX-2025-09-02-001",
+            "date": "2025-09-02",
+            "description": "Rent Payment - Maple Street Apartments",
+            "category": "HOUSING_RENT",
+            "amount": -1500.0,
+            "direction": "DEBIT",
+            "running_balance": 4500.0
+        },
+        {
+            "transaction_id": "TX-2025-09-05-001",
+            "date": "2025-09-05",
+            "description": "Auto Loan Payment - LN-2019-0009",
+            "category": "DEBT_LOAN_PAYMENT",
+            "amount": -260.0,
+            "direction": "DEBIT",
+            "running_balance": 4240.0
+        },
+        {
+            "transaction_id": "TX-2025-09-10-001",
+            "date": "2025-09-10",
+            "description": "Credit Card Payment - CARD-8842",
+            "category": "DEBT_CREDIT_CARD_PAYMENT",
+            "amount": -220.0,
+            "direction": "DEBIT",
+            "running_balance": 4020.0
+        },
+        {
+            "transaction_id": "TX-2025-09-18-001",
+            "date": "2025-09-18",
+            "description": "Online Grocery Store",
+            "category": "LIVING_EXPENSES",
+            "amount": -180.0,
+            "direction": "DEBIT",
+            "running_balance": 3840.0
+        },
+        {
+            "transaction_id": "TX-2025-09-25-001",
+            "date": "2025-09-25",
+            "description": "Overdraft Fee",
+            "category": "FEE_OVERDRAFT",
+            "amount": -35.0,
+            "direction": "DEBIT",
+            "running_balance": 3805.0
+        },
+        {
+            "transaction_id": "TX-2025-10-01-001",
+            "date": "2025-10-01",
+            "description": "Direct Deposit - Acme Technologies Inc. Payroll",
+            "category": "INCOME_SALARY",
+            "amount": 4800.0,
+            "direction": "CREDIT",
+            "running_balance": 8605.0
+        },
+        {
+            "transaction_id": "TX-2025-10-03-001",
+            "date": "2025-10-03",
+            "description": "Rent Payment - Maple Street Apartments",
+            "category": "HOUSING_RENT",
+            "amount": -1500.0,
+            "direction": "DEBIT",
+            "running_balance": 7105.0
+        },
+        {
+            "transaction_id": "TX-2025-10-05-001",
+            "date": "2025-10-05",
+            "description": "Auto Loan Payment - LN-2019-0009",
+            "category": "DEBT_LOAN_PAYMENT",
+            "amount": -260.0,
+            "direction": "DEBIT",
+            "running_balance": 6845.0
+        },
+        {
+            "transaction_id": "TX-2025-10-12-001",
+            "date": "2025-10-12",
+            "description": "Online Casino - Gaming Purchase",
+            "category": "HIGH_RISK_GAMBLING",
+            "amount": -120.0,
+            "direction": "DEBIT",
+            "running_balance": 6725.0
+        },
+        {
+            "transaction_id": "TX-2025-10-20-001",
+            "date": "2025-10-20",
+            "description": "Supermarket",
+            "category": "LIVING_EXPENSES",
+            "amount": -160.0,
+            "direction": "DEBIT",
+            "running_balance": 6565.0
+        },
+        {
+            "transaction_id": "TX-2025-11-01-001",
+            "date": "2025-11-01",
+            "description": "Direct Deposit - Acme Technologies Inc. Payroll",
+            "category": "INCOME_SALARY",
+            "amount": 4800.0,
+            "direction": "CREDIT",
+            "running_balance": 11365.0
+        },
+        {
+            "transaction_id": "TX-2025-11-03-001",
+            "date": "2025-11-03",
+            "description": "Rent Payment - Maple Street Apartments",
+            "category": "HOUSING_RENT",
+            "amount": -1500.0,
+            "direction": "DEBIT",
+            "running_balance": 9865.0
+        },
+        {
+            "transaction_id": "TX-2025-11-05-001",
+            "date": "2025-11-05",
+            "description": "Auto Loan Payment - LN-2019-0009",
+            "category": "DEBT_LOAN_PAYMENT",
+            "amount": -260.0,
+            "direction": "DEBIT",
+            "running_balance": 9605.0
+        },
+        {
+            "transaction_id": "TX-2025-11-10-001",
+            "date": "2025-11-10",
+            "description": "Coffee Shop",
+            "category": "LIFESTYLE",
+            "amount": -25.5,
+            "direction": "DEBIT",
+            "running_balance": 9579.5
+        },
+        {
+            "transaction_id": "TX-2025-11-18-001",
+            "date": "2025-11-18",
+            "description": "Credit Card Payment - CARD-8842",
+            "category": "DEBT_CREDIT_CARD_PAYMENT",
+            "amount": -220.0,
+            "direction": "DEBIT",
+            "running_balance": 9359.5
+        },
+        {
+            "transaction_id": "TX-2025-11-25-001",
+            "date": "2025-11-25",
+            "description": "Overdraft Fee",
+            "category": "FEE_OVERDRAFT",
+            "amount": -35.0,
+            "direction": "DEBIT",
+            "running_balance": 9324.5
+        }
+    ]
+}

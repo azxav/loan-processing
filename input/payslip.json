@@ -1,0 +1,51 @@
+{
+    "document_type": "PAYSLIP",
+    "pay_period_start": "2025-11-01",
+    "pay_period_end": "2025-11-30",
+    "pay_date": "2025-11-30",
+    "employee": {
+        "employee_id": "AJ-4521",
+        "full_name": "Alex Johnson",
+        "national_id_number": "ID-987654321",
+        "address": {
+            "line1": "123 Maple Street",
+            "line2": "Apt 4B",
+            "city": "Springfield",
+            "state": "CA",
+            "postal_code": "94016",
+            "country": "US"
+        }
+    },
+    "employer": {
+        "name": "Acme Technologies Inc.",
+        "registration_number": "ACME-REG-2020",
+        "address": {
+            "line1": "500 Innovation Drive",
+            "city": "San Francisco",
+            "state": "CA",
+            "postal_code": "94105",
+            "country": "US"
+        }
+    },
+    "earnings": {
+        "base_salary": 6500.0,
+        "overtime_pay": 350.0,
+        "bonus": 0.0,
+        "other_earnings": 150.0,
+        "gross_pay": 7000.0
+    },
+    "deductions": {
+        "tax": 1400.0,
+        "social_security": 350.0,
+        "health_insurance": 200.0,
+        "retirement_contribution": 250.0,
+        "other_deductions": 0.0,
+        "total_deductions": 2200.0
+    },
+    "net_pay": 4800.0,
+    "currency": "USD",
+    "payment_method": "BANK_TRANSFER",
+    "payment_account_last4": "4321",
+    "raw_ocr_confidence": 0.97,
+    "source_file_name": "payslip_nov_2025.pdf"
+}

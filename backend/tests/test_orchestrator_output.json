@@ -1,0 +1,135 @@
+{
+  "application_id": "APP-2025-0001",
+  "processing_status": "COMPLETED",
+  "routing_action": "MANUAL_REVIEW",
+  "routing_priority": "STANDARD",
+  "routing_reason": "The applicant has a good credit score (720) and stable income, but a discrepancy in debt payment reporting and a high-risk gambling transaction warrant a manual review.",
+  "routing_confidence": 0.92,
+  "agent_results": {
+    "document_verification": {
+      "is_valid": true,
+      "completeness_score": 1.0,
+      "consistency_issues": [],
+      "fraud_indicators": [],
+      "name_consistency": true,
+      "id_consistency": true,
+      "employer_consistency": true,
+      "address_consistency": true,
+      "risk_level": "LOW"
+    },
+    "income_analysis": {
+      "average_monthly_income": 4800.0,
+      "verified_monthly_income": 4800.0,
+      "income_stability_score": 0.9,
+      "regular_income_detected": true,
+      "salary_deposits_count": 3,
+      "unusual_transactions": [
+        {
+          "transaction_id": "TX-2025-10-12-001",
+          "date": "2025-10-12",
+          "description": "Online Casino - Gaming Purchase",
+          "category": "HIGH_RISK_GAMBLING",
+          "amount": -120.0,
+          "direction": "DEBIT",
+          "running_balance": 6725.0
+        }
+      ],
+      "income_trend": "STABLE",
+      "income_verification_passed": true,
+      "stated_vs_actual_variance": -1700.0,
+      "confidence_score": 0.95
+    },
+    "debt_assessment": {
+      "declared_debt_payments": 860.0,
+      "observed_debt_payments": 406.67,
+      "total_outstanding_debt": 7200.0,
+      "monthly_debt_obligations": 406.67,
+      "debt_to_income_ratio": 0.06,
+      "hidden_liabilities_detected": false,
+      "existing_loans": [
+        {
+          "account_id": "LN-2019-0009",
+          "product_type": "AUTO_LOAN",
+          "outstanding_balance": 7200.0,
+          "monthly_payment": 260.0
+        }
+      ],
+      "debt_payment_transactions": [
+        {
+          "date": "2025-09-05",
+          "description": "Auto Loan Payment - LN-2019-0009",
+          "category": "DEBT_LOAN_PAYMENT",
+          "amount": 260.0
+        },
+        {
+          "date": "2025-09-10",
+          "description": "Credit Card Payment - CARD-8842",
+          "category": "DEBT_CREDIT_CARD_PAYMENT",
+          "amount": 220.0
+        },
+        {
+          "date": "2025-10-05",
+          "description": "Auto Loan Payment - LN-2019-0009",
+          "category": "DEBT_LOAN_PAYMENT",
+          "amount": 260.0
+        },
+        {
+          "date": "2025-11-05",
+          "description": "Auto Loan Payment - LN-2019-0009",
+          "category": "DEBT_LOAN_PAYMENT",
+          "amount": 260.0
+        },
+        {
+          "date": "2025-11-18",
+          "description": "Credit Card Payment - CARD-8842",
+          "category": "DEBT_CREDIT_CARD_PAYMENT",
+          "amount": 220.0
+        }
+      ],
+      "discrepancy_detected": true,
+      "risk_assessment": "medium"
+    },
+    "compliance_check": {
+      "compliant": true,
+      "age_verified": true,
+      "identity_verified": true,
+      "employment_verified": true,
+      "sanctions_clear": true,
+      "kyc_passed": true,
+      "aml_passed": true,
+      "id_expired": false,
+      "applicant_age": 34,
+      "violations": []
+    },
+    "final_report": {
+      "summary": "The applicant has a stable income and a good credit score, with all documents verified and compliance checks passed. However, there is a discrepancy between declared and observed debt payments, and a single high-risk gambling transaction was noted.",
+      "strengths": [
+        "Valid and complete documentation.",
+        "Stable and verified income.",
+        "Low debt-to-income ratio (0.06).",
+        "Good credit score (720).",
+        "All compliance checks passed (KYC, AML, sanctions).",
+        "No hidden liabilities detected."
+      ],
+      "weaknesses": [
+        "Discrepancy detected between declared and observed debt payments.",
+        "One high-risk gambling transaction identified."
+      ],
+      "risk_factors": [
+        "Discrepancy in debt payment reporting.",
+        "High-risk gambling transaction."
+      ],
+      "overall_risk_level": "MEDIUM",
+      "recommendation": "MANUAL_REVIEW",
+      "confidence_score": 0.92
+    }
+  },
+  "execution_time_seconds": 39.658585,
+  "timestamp": "2025-12-03T20:35:13.633331",
+  "final_decision": "PENDING_MANUAL_REVIEW",
+  "decision_method": "MANUAL",
+  "review_priority": "STANDARD",
+  "ai_recommended_decision": "MANUAL_REVIEW",
+  "next_steps": "Assign to underwriter queue",
+  "sla_hours": 24
+}

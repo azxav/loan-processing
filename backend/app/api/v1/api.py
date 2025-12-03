@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import loans, documents
+from backend.app.api.v1.endpoints import loans, documents
 
 api_router = APIRouter()
 api_router.include_router(loans.router, prefix="/loans", tags=["loans"])

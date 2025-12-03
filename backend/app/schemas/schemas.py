@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from app.models.models import ApplicationStatus, DocumentType
+from backend.app.models.models import ApplicationStatus, DocumentType
 
 # Customer Schemas
 class CustomerBase(BaseModel):

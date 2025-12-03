@@ -1,0 +1,57 @@
+{
+    "application_id": "APP-2025-0001",
+    "application_date": "2025-12-03",
+    "product_type": "PERSONAL_LOAN",
+    "requested_amount": 15000.0,
+    "requested_term_months": 36,
+    "purpose_of_loan": "Debt consolidation",
+    "channel": "WEB_PORTAL",
+    "applicant": {
+        "customer_id": "CUST-100001",
+        "first_name": "Alex",
+        "last_name": "Johnson",
+        "full_name": "Alex Johnson",
+        "date_of_birth": "1991-04-15",
+        "national_id_number": "ID-987654321",
+        "email": "alex.johnson@example.com",
+        "phone_mobile": "+1-555-012-3456"
+    },
+    "residential_address": {
+        "line1": "123 Maple Street",
+        "line2": "Apt 4B",
+        "city": "Springfield",
+        "state": "CA",
+        "postal_code": "94016",
+        "country": "US",
+        "years_at_address": 3.5
+    },
+    "employment_details": {
+        "status": "EMPLOYED_FULL_TIME",
+        "employer_name": "Acme Technologies Inc.",
+        "job_title": "Software Engineer",
+        "employment_start_date": "2020-06-01",
+        "stated_gross_monthly_income": 6500.0,
+        "stated_net_monthly_income": 4800.0,
+        "pay_frequency": "MONTHLY"
+    },
+    "financial_profile": {
+        "monthly_rent_or_mortgage": 1500.0,
+        "other_monthly_debt_payments": 600.0,
+        "total_credit_cards": 3,
+        "has_existing_loans_with_bank": true,
+        "existing_loan_accounts": [
+            {
+                "account_id": "LN-2019-0009",
+                "product_type": "AUTO_LOAN",
+                "outstanding_balance": 7200.0,
+                "monthly_payment": 260.0
+            }
+        ]
+    },
+    "consents": {
+        "agree_terms_and_conditions": true,
+        "agree_credit_bureau_check": true,
+        "agree_data_processing": true,
+        "timestamp_utc": "2025-12-03T06:20:00Z"
+    }
+}

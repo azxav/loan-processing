@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from sqlalchemy.orm import Session
-from app.models import models
-from app.services.ledger_service import ledger_service
+from backend.app.models import models
+from backend.app.services.ledger_service import ledger_service
 import uuid
 
 class BankingService:

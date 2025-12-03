@@ -1,8 +1,18 @@
+import os
+import sys
+from pathlib import Path
+
 from fastapi.testclient import TestClient
-from app.main import app
-from app.core.database import Base, engine, get_db
 from sqlalchemy.orm import sessionmaker
 import pytest
+
+# Ensure project root is on sys.path so `backend` can be imported
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from backend.app.main import app
+from backend.app.core.database import Base, engine, get_db
 
 # Setup test database
 from sqlalchemy import create_engine

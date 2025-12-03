@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
-from app.core.database import get_db
-from app.models import models
-from app.schemas import schemas
-from app.services.ocr_service import ocr_service
+from backend.app.core.database import get_db
+from backend.app.models import models
+from backend.app.schemas import schemas
+from backend.app.services.ocr_service import ocr_service
 
 router = APIRouter()
 

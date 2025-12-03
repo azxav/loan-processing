@@ -1,5 +1,8 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Loan Processing Automation"
@@ -11,7 +14,13 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "loan_automation"
     DATABASE_URL: Optional[str] = None
 
-    GOOGLE_API_KEY: Optional[str] = None
+    GOOGLE_API_KEY: Optional[str] = os.getenv("GOOGLE_API_KEY")
+    
+    # AI Agent Orchestrator Configuration
+    GEMINI_MODEL_VERSION: str = "gemini-2.5-flash-lite"
+    AGENT_TIMEOUT_SECONDS: int = 30
+    MAX_PARALLEL_AGENTS: int = 5
+    ENABLE_AGENT_LOGGING: bool = True
     
     class Config:
         case_sensitive = True

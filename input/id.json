@@ -1,0 +1,23 @@
+{
+    "document_type": "NATIONAL_ID",
+    "issuing_country": "US",
+    "id_number": "ID-987654321",
+    "full_name": "Alex Johnson",
+    "first_name": "Alex",
+    "last_name": "Johnson",
+    "date_of_birth": "1991-04-15",
+    "gender": "M",
+    "date_of_issue": "2020-03-10",
+    "date_of_expiry": "2030-03-09",
+    "address_on_id": {
+        "line1": "123 Maple Street",
+        "line2": "Apt 4B",
+        "city": "Springfield",
+        "state": "CA",
+        "postal_code": "94016",
+        "country": "US"
+    },
+    "mrz_data": null,
+    "raw_ocr_confidence": 0.98,
+    "source_file_name": "alex_johnson_id_front.jpg"
+}
