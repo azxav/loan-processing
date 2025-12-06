@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Chip } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Chip, Container } from '@mui/material';
 import api from '../api';
 
 interface Application {
@@ -25,33 +25,35 @@ const StatusDashboard: React.FC = () => {
     }, []);
 
     return (
-        <Paper elevation={3} sx={{ p: 4, maxWidth: 800, mx: 'auto', mt: 4 }}>
-            <Typography variant="h5" gutterBottom>Application Status</Typography>
-            <TableContainer>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>ID</TableCell>
-                            <TableCell>Amount</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell>Date</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {applications.map((app) => (
-                            <TableRow key={app.id}>
-                                <TableCell>{app.id}</TableCell>
-                                <TableCell>${app.loan_amount}</TableCell>
-                                <TableCell>
-                                    <Chip label={app.status} color={app.status === 'APPROVED' ? 'success' : 'default'} />
-                                </TableCell>
-                                <TableCell>{new Date(app.created_at).toLocaleDateString()}</TableCell>
+        <Container>
+            <Paper elevation={3} sx={{ p: 4, maxWidth: 800, mx: 'auto', mt: 4 }}>
+                <Typography variant="h5" gutterBottom>Application Status</Typography>
+                <TableContainer>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>ID</TableCell>
+                                <TableCell>Amount</TableCell>
+                                <TableCell>Status</TableCell>
+                                <TableCell>Date</TableCell>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-        </Paper>
+                        </TableHead>
+                        <TableBody>
+                            {applications.map((app) => (
+                                <TableRow key={app.id}>
+                                    <TableCell>{app.id}</TableCell>
+                                    <TableCell>${app.loan_amount}</TableCell>
+                                    <TableCell>
+                                        <Chip label={app.status} color={app.status === 'APPROVED' ? 'success' : 'default'} />
+                                    </TableCell>
+                                    <TableCell>{new Date(app.created_at).toLocaleDateString()}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Paper>
+        </Container>
     );
 };
 

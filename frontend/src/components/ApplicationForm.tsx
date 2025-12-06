@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box, Typography, Paper } from '@mui/material';
+import { TextField, Button, Box, Typography, Paper, Container } from '@mui/material';
 import api from '../api';
 
 const ApplicationForm: React.FC = () => {
@@ -32,16 +32,18 @@ const ApplicationForm: React.FC = () => {
     };
 
     return (
-        <Paper elevation={3} sx={{ p: 4, maxWidth: 600, mx: 'auto', mt: 4 }}>
-            <Typography variant="h5" gutterBottom>Apply for a Loan</Typography>
-            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <TextField label="Loan Amount" name="loan_amount" type="number" onChange={handleChange} required />
-                <TextField label="Purpose" name="loan_purpose" onChange={handleChange} required />
-                <TextField label="Term (Months)" name="loan_term_months" type="number" onChange={handleChange} required />
-                <Button type="submit" variant="contained" color="primary">Submit Application</Button>
-            </Box>
-            {message && <Typography sx={{ mt: 2 }}>{message}</Typography>}
-        </Paper>
+        <Container>
+            <Paper elevation={3} sx={{ p: 4, maxWidth: 600, mx: 'auto', mt: 4 }}>
+                <Typography variant="h5" gutterBottom>Apply for a Loan</Typography>
+                <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <TextField label="Loan Amount" name="loan_amount" type="number" onChange={handleChange} required />
+                    <TextField label="Purpose" name="loan_purpose" onChange={handleChange} required />
+                    <TextField label="Term (Months)" name="loan_term_months" type="number" onChange={handleChange} required />
+                    <Button type="submit" variant="contained" color="primary">Submit Application</Button>
+                </Box>
+                {message && <Typography sx={{ mt: 2 }}>{message}</Typography>}
+            </Paper>
+        </Container>
     );
 };
 

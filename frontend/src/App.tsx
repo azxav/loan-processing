@@ -1,8 +1,9 @@
 
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Container, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button } from '@mui/material';
 import ApplicationForm from './components/ApplicationForm';
 import StatusDashboard from './components/StatusDashboard';
+import StaffDashboard from './components/StaffDashboard/StaffDashboard';
 
 function App() {
   return (
@@ -14,16 +15,14 @@ function App() {
           </Typography>
           <Button color="inherit" component={Link} to="/">Apply</Button>
           <Button color="inherit" component={Link} to="/status">Status</Button>
+          <Button color="inherit" component={Link} to="/staff-dashboard">Staff Dashboard</Button>
         </Toolbar>
       </AppBar>
-      <Container>
-        <Box sx={{ mt: 4 }}>
-          <Routes>
-            <Route path="/" element={<ApplicationForm />} />
-            <Route path="/status" element={<StatusDashboard />} />
-          </Routes>
-        </Box>
-      </Container>
+      <Routes>
+        <Route path="/" element={<ApplicationForm />} />
+        <Route path="/status" element={<StatusDashboard />} />
+        <Route path="/staff-dashboard" element={<StaffDashboard />} />
+      </Routes>
     </Router>
   );
 }
