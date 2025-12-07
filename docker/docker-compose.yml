@@ -8,28 +8,37 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:password@db/loan_automation
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongo:27017}
+      - MONGODB_DB=${MONGODB_DB:-loan_automation}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - GEMINI_MODEL_VERSION=${GEMINI_MODEL_VERSION:-gemini-2.5-flash-lite}
+      - AGENT_TIMEOUT_SECONDS=${AGENT_TIMEOUT_SECONDS:-30}
+      - MAX_PARALLEL_AGENTS=${MAX_PARALLEL_AGENTS:-5}
+      - ENABLE_AGENT_LOGGING=${ENABLE_AGENT_LOGGING:-true}
+      - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS:-*}
     depends_on:
-      - db
+      - mongo
 
   frontend:
     build:
       context: ../frontend
       dockerfile: ../docker/Dockerfile.frontend
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://backend:8000/api/v1}
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://backend:8000/api/v1}
     ports:
       - "3000:80"
     depends_on:
       - backend
 
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: loan_automation
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
 
 volumes:
-  postgres_data:
+  mongo_data:

@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  // Hard fallback to backend dev server to avoid hitting the Vite origin.
+  'http://localhost:8000/api/v1';
+
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api/v1',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -31,11 +36,17 @@ export type AgentTask = {
   updated_at: string;
 };
 
-export interface ChatResponse {
+export type CopilotToolResult = {
+  name: string;
+  result: any;
+};
+
+export interface CopilotChatResponse {
   reply: string;
-  actions: { label: string; action: string }[];
+  session_id: string;
+  used_tools: { name: string; args: Record<string, any> }[];
+  tool_results: CopilotToolResult[];
   context_echo?: Record<string, any>;
-  prompt: string;
 }
 
 export type PlanResult = {
@@ -61,8 +72,12 @@ export type LoanAnalytics = {
   trend: { day: string; count: number }[];
 };
 
-export const sendAgentChat = async (prompt: string, context?: Record<string, any>): Promise<ChatResponse> => {
-  const { data } = await api.post('/agent/chat', { prompt, context });
+export const sendCopilotChat = async (
+  prompt: string,
+  context?: Record<string, any>,
+  sessionId?: string,
+): Promise<CopilotChatResponse> => {
+  const { data } = await api.post('/agent/chat', { prompt, context, session_id: sessionId });
   return data;
 };
 

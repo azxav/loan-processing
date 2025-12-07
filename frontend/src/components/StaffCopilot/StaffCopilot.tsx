@@ -7,6 +7,7 @@ import {
   Divider,
   IconButton,
   LinearProgress,
+  CircularProgress,
   List,
   ListItem,
   ListItemAvatar,
@@ -20,8 +21,8 @@ import {
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import SendIcon from '@mui/icons-material/Send';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { executePlannedAction, fetchTaskStatus, planAction, startOrchestration } from '../../api';
-import type { AgentTask } from '../../api';
+import { fetchTaskStatus, sendCopilotChat, startOrchestration } from '../../api';
+import type { AgentTask, CopilotToolResult } from '../../api';
 import { sampleApplications } from '../../data/sampleApplications';
 import type { SampleApplication } from '../../data/sampleApplications';
 
@@ -30,6 +31,23 @@ type ChatMessage = {
   sender: 'user' | 'assistant' | 'system';
   text: string;
   actions?: { label: string; action: string }[];
+  toolResults?: CopilotToolResult[];
+  usedTools?: { name: string; args: Record<string, any> }[];
+};
+
+const formatTaskLogLine = (msg: any): string => {
+  const stepLabel = msg.step ? msg.step.replace(/-/g, ' ') : msg.status || 'update';
+  const text = msg.text ?? msg.status ?? 'working';
+  return `${stepLabel}: ${text}`;
+};
+
+type WorkspaceState = {
+  messages: ChatMessage[];
+  sessionId?: string;
+  tasks: Record<string, AgentTask>;
+  activeTaskId: string | null;
+  notifiedResults: Record<string, boolean>;
+  taskMessageCursor: Record<string, number>;
 };
 
 const summarizeApplication = (data: any): string => {
@@ -134,6 +152,95 @@ const formatTaskResult = (task: AgentTask): string => {
   return JSON.stringify(result, null, 2);
 };
 
+const formatToolResult = (tool: CopilotToolResult): string => {
+  const { name, result } = tool;
+  if (!result) return `${name}: no result`;
+
+  if (name === 'search_loans_with_filters') {
+    const items = Array.isArray(result.results) ? result.results.slice(0, 5) : [];
+    const header = `Found ${result.count ?? items.length} applications (showing up to ${items.length}).`;
+    const list = items
+      .map((app: any) => {
+        const id = app.id || app._id;
+        const status = app.status || 'UNKNOWN';
+        const amt = app.loan_amount ? `$${app.loan_amount}` : 'n/a';
+        return `- ${id} • ${status} • ${amt}`;
+      })
+      .join('\n');
+    return [header, list].filter(Boolean).join('\n');
+  }
+
+  if (name === 'get_application_summary') {
+    if (!result.found) return 'Application not found.';
+    const s = result.summary || {};
+    return [
+      `Application ${s.id} (${s.status || 'UNKNOWN'})`,
+      s.loan_amount ? `Amount: ${s.loan_amount}` : null,
+      s.loan_purpose ? `Purpose: ${s.loan_purpose}` : null,
+      s.loan_term_months ? `Term: ${s.loan_term_months} months` : null,
+      `Documents: ${s.document_count ?? 0}${s.document_types ? ` (${s.document_types.join(', ')})` : ''}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  if (name === 'get_analytics_report') {
+    const counts = result.status_counts || {};
+    const lines = [`Range ${result.range?.from} → ${result.range?.to}`, `Total: ${result.total ?? 'n/a'}`];
+    if (counts && Object.keys(counts).length) {
+      lines.push(
+        'By status:',
+        ...Object.entries(counts).map(([k, v]) => `- ${k}: ${v}`),
+      );
+    }
+    const trend = Array.isArray(result.trend) ? result.trend.slice(0, 5) : [];
+    if (trend.length) {
+      lines.push('Trend (first 5):', ...trend.map((t: any) => `- ${t.bucket ?? t.day}: ${t.count}`));
+    }
+    return lines.join('\n');
+  }
+
+  if (name === 'compare_applications') {
+    const items = Array.isArray(result.results) ? result.results : [];
+    const lines = items.map((item: any) =>
+      item.found
+        ? `- ${item.application_id}: ${item.status || 'UNKNOWN'} • $${item.loan_amount ?? 'n/a'} • docs ${item.document_count ?? 0}`
+        : `- ${item.application_id}: not found`,
+    );
+    return `Comparison (${items.length}):\n${lines.join('\n')}`;
+  }
+
+  if (name === 'update_application_status') {
+    if (!result.updated) return `Status update failed: ${result.reason || 'Unknown reason'}`;
+    const app = result.application || {};
+    return `Status updated to ${app.status} (application ${app.id || app._id})`;
+  }
+
+  if (name === 'add_application_note') {
+    if (!result.updated) return `Note not added: ${result.reason || 'Unknown reason'}`;
+    return 'Note added successfully.';
+  }
+
+  if (name === 'assign_reviewer') {
+    if (!result.updated) return `Assignment failed: ${result.reason || 'Unknown reason'}`;
+    const app = result.application || {};
+    return `Assigned to ${app.assigned_reviewer || 'reviewer'} (priority ${app.review_priority || 'n/a'})`;
+  }
+
+  if (name === 'get_document_analysis') {
+    const counts = result.document_type_counts || {};
+    const lines = Object.entries(counts).map(([k, v]) => `- ${k}: ${v}`);
+    return [`Documents fetched (${result.documents?.length ?? 0})`, ...lines].join('\n');
+  }
+
+  if (name === 'trigger_re_evaluation') {
+    if (!result.ready) return `Re-evaluation not prepared: ${result.reason || 'Unknown reason'}`;
+    return 'Payload prepared for re-evaluation. You can run the orchestrator with this payload.';
+  }
+
+  return `${name}:\n${JSON.stringify(result, null, 2)}`;
+};
+
 const buildPayload = (app: SampleApplication) => ({
   loan_application: {
     id: app.id,
@@ -176,7 +283,7 @@ const initialMessages: ChatMessage[] = [
   {
     id: 'welcome',
     sender: 'assistant',
-    text: 'I’m your staff copilot. I can orchestrate AI-agent processes, fetch loan data from MongoDB (read-only), and keep you updated.',
+    text: 'I’m your staff copilot. I use tools to query MongoDB, run analytics, summarize applications, and kick off orchestrations. Ask for reports or specific applications.',
     actions: [
       { label: 'Run loan orchestration', action: 'run_orchestrator' },
       { label: 'Check task status', action: 'check_status' },
@@ -187,15 +294,31 @@ const initialMessages: ChatMessage[] = [
   },
 ];
 
+const createWorkspaceState = (): WorkspaceState => ({
+  messages: [...initialMessages],
+  sessionId: undefined,
+  tasks: {},
+  activeTaskId: null,
+  notifiedResults: {},
+  taskMessageCursor: {},
+});
+
 const StaffCopilot = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [workspaceState, setWorkspaceState] = useState<Record<string, WorkspaceState>>(() => {
+    const firstId = sampleApplications[0]?.id;
+    return firstId ? { [firstId]: createWorkspaceState() } : {};
+  });
   const [input, setInput] = useState('');
-  const [tasks, setTasks] = useState<Record<string, AgentTask>>({});
-  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [isRunningAction, setIsRunningAction] = useState(false);
-  const [notifiedResults, setNotifiedResults] = useState<Record<string, boolean>>({});
   const [selectedApplicationId, setSelectedApplicationId] = useState(sampleApplications[0]?.id ?? '');
+
+  const currentWorkspace = useMemo(
+    () => workspaceState[selectedApplicationId] ?? createWorkspaceState(),
+    [workspaceState, selectedApplicationId],
+  );
+
+  const { messages, sessionId, tasks, activeTaskId, notifiedResults } = currentWorkspace;
 
   const selectedApplication = useMemo(
     () => sampleApplications.find((app) => app.id === selectedApplicationId) ?? sampleApplications[0],
@@ -209,6 +332,16 @@ const StaffCopilot = () => {
     [tasks],
   );
 
+  const isBusy = isSending || isRunningAction || openTasks.length > 0;
+
+  useEffect(() => {
+    if (!selectedApplicationId) return;
+    setWorkspaceState((prev) => {
+      if (prev[selectedApplicationId]) return prev;
+      return { ...prev, [selectedApplicationId]: createWorkspaceState() };
+    });
+  }, [selectedApplicationId]);
+
   useEffect(() => {
     if (!openTasks.length) return undefined;
     const interval = setInterval(async () => {
@@ -218,146 +351,167 @@ const StaffCopilot = () => {
           return [task.id, data] as const;
         }),
       );
-      setTasks((prev) => {
-        const next = { ...prev };
+      setWorkspaceState((prev) => {
+        const ws = prev[selectedApplicationId] ?? createWorkspaceState();
+        const updatedTasks = { ...ws.tasks };
         updates.forEach(([id, data]) => {
-          next[id] = data;
+          updatedTasks[id] = data;
         });
-        return next;
+        return { ...prev, [selectedApplicationId]: { ...ws, tasks: updatedTasks } };
       });
     }, 2000);
     return () => clearInterval(interval);
-  }, [openTasks]);
+  }, [openTasks, selectedApplicationId]);
 
-  const appendMessage = (msg: ChatMessage) => {
-    setMessages((prev) => [...prev, msg]);
+  const updateWorkspace = (workspaceId: string, updater: (ws: WorkspaceState) => WorkspaceState) => {
+    setWorkspaceState((prev) => {
+      const ws = prev[workspaceId] ?? createWorkspaceState();
+      return { ...prev, [workspaceId]: updater(ws) };
+    });
+  };
+
+  const appendMessage = (workspaceId: string, msg: ChatMessage) => {
+    updateWorkspace(workspaceId, (ws) => ({ ...ws, messages: [...ws.messages, msg] }));
   };
 
   useEffect(() => {
-    // Surface completed task results into the chat once.
-    Object.values(tasks).forEach((task) => {
-      if (task.status === 'completed' && task.result && !notifiedResults[task.id]) {
-        appendMessage({
+    const workspaceId = selectedApplicationId || sampleApplications[0]?.id || 'default';
+    const unseen = Object.values(tasks).filter(
+      (task) => task.status === 'completed' && task.result && !notifiedResults[task.id],
+    );
+    if (!unseen.length) return;
+    setWorkspaceState((prev) => {
+      const ws = prev[workspaceId] ?? createWorkspaceState();
+      const nextMessages = [...ws.messages];
+      const nextNotified = { ...ws.notifiedResults };
+      unseen.forEach((task) => {
+        nextMessages.push({
           id: `result-${task.id}`,
           sender: 'assistant',
           text: `AI response (${task.description}):\n${formatTaskResult(task)}`,
         });
-        setNotifiedResults((prev) => ({ ...prev, [task.id]: true }));
-      }
+        nextNotified[task.id] = true;
+      });
+      return { ...prev, [workspaceId]: { ...ws, messages: nextMessages, notifiedResults: nextNotified } };
     });
-  }, [tasks, notifiedResults]);
+  }, [tasks, notifiedResults, selectedApplicationId]);
 
-  const handleSend = async () => {
+  useEffect(() => {
+    // Surface step-by-step task updates into the chat as they arrive.
+    const workspaceId = selectedApplicationId || sampleApplications[0]?.id || 'default';
+    const taskEntries = Object.entries(tasks);
+    if (!taskEntries.length) return;
+    setWorkspaceState((prev) => {
+      const ws = prev[workspaceId] ?? createWorkspaceState();
+      const nextMessages = [...ws.messages];
+      const nextCursor = { ...ws.taskMessageCursor };
+
+      taskEntries.forEach(([id, task]) => {
+        const seen = nextCursor[id] ?? 0;
+        const all = Array.isArray(task.messages) ? task.messages : [];
+        const newOnes = all.slice(seen);
+        if (!newOnes.length) return;
+        newOnes.forEach((m, idx) => {
+          nextMessages.push({
+            id: `taskmsg-${id}-${seen + idx}`,
+            sender: 'assistant',
+            text: `Orchestration update: ${formatTaskLogLine(m)}`,
+          });
+        });
+        nextCursor[id] = all.length;
+      });
+
+      // Also surface terminal statuses if not yet included.
+      taskEntries.forEach(([id, task]) => {
+        if (!task.status || ['queued', 'running'].includes(task.status)) return;
+        const alreadyHasStatus = nextMessages.some((m) => m.id === `task-status-${id}-${task.status}`);
+        if (!alreadyHasStatus) {
+          const errorText = task.error ? ` Error: ${task.error}` : '';
+          nextMessages.push({
+            id: `task-status-${id}-${task.status}`,
+            sender: 'assistant',
+            text: `Task ${task.description} is ${task.status}.${errorText}`,
+          });
+        }
+      });
+
+      return { ...prev, [workspaceId]: { ...ws, messages: nextMessages, taskMessageCursor: nextCursor } };
+    });
+  }, [tasks, selectedApplicationId]);
+
+  const handleSend = async (overrideText?: string) => {
     if (isSending) return;
-    if (!input.trim()) return;
-    const text = input.trim();
+    const text = (overrideText ?? input).trim();
+    if (!text) return;
+    const workspaceId = selectedApplicationId || sampleApplications[0]?.id || 'default';
     setInput('');
-    appendMessage({ id: `user-${Date.now()}`, sender: 'user', text });
+    appendMessage(workspaceId, { id: `user-${Date.now()}`, sender: 'user', text });
     setIsSending(true);
     try {
       const activeApp = selectedApplication ?? sampleApplications[0];
-      const sharedParams: Record<string, any> = {
+      const context: Record<string, any> = {
+        workspace: 'loan-processing',
         application_id: activeApp?.id,
+        applicant_name: activeApp?.applicantName,
+        status: activeApp?.statusLabel,
         payload: activeApp ? buildPayload(activeApp) : undefined,
-        context: {
-          workspace: 'loan-processing',
-          application_id: activeApp?.id,
-          applicant_name: activeApp?.applicantName,
-        },
       };
 
-      const plan = await planAction(text, {
-        ...sharedParams,
-      } as any);
+      const resp = await sendCopilotChat(text, context, sessionId);
+      const toolSummary =
+        resp.tool_results?.length && resp.tool_results.length > 0
+          ? `\n\nTool results:\n${resp.tool_results.map((t) => formatToolResult(t)).join('\n\n')}`
+          : '';
 
-      if (!plan.safe || !plan.action) {
-        appendMessage({
-          id: `plan-${Date.now()}`,
-          sender: 'assistant',
-          text: `AI response: cannot run this request.\n${plan.guidance}\nSteps:\n- ${plan.steps.join('\n- ')}`,
-        });
-        return;
-      }
-
-      const actionAck: Record<string, string> = {
-        mongo_get_latest_application: 'Fetching the latest application and summarizing it for you...',
-        mongo_get_application: 'Fetching that application and summarizing it for you...',
-        mongo_get_documents: 'Fetching the documents you asked for...',
-        mongo_search_applications: 'Searching applications with your filters...',
-        analytics_loans_count: 'Running loan count analytics...',
-        analytics_status_counts: 'Aggregating loans by status...',
-        analytics_loans_trend: 'Building the loan trend...',
-        run_orchestrator: 'Starting the orchestrator...',
-        chat: 'Generating a response...',
-      };
-
-      appendMessage({
-        id: `ack-${Date.now()}`,
-        sender: 'assistant',
-        text: actionAck[plan.action] || 'Working on it...',
-      });
-
-      const exec = await executePlannedAction(text, {
-        ...sharedParams,
-      } as any);
-
-      const execTask = exec.task;
-
-      if (execTask) {
-        if (execTask.status === 'completed' && execTask.result) {
-          // Instant result (e.g., chat) – present immediately.
-          setTasks((prev) => ({ ...prev, [execTask.id]: execTask }));
-          setNotifiedResults((prev) => ({ ...prev, [execTask.id]: true }));
-          appendMessage({
-            id: `result-${execTask.id}`,
+      updateWorkspace(workspaceId, (ws) => ({
+        ...ws,
+        sessionId: resp.session_id,
+        messages: [
+          ...ws.messages,
+          {
+            id: `assistant-${Date.now()}`,
             sender: 'assistant',
-            text: `AI response (${execTask.description}):\n${formatTaskResult(execTask)}`,
-          });
-          return;
-        }
-        startTask(execTask);
-        return;
-      }
-
-      if (exec.status === 'blocked') {
-        appendMessage({
-          id: `blocked-${Date.now()}`,
-          sender: 'assistant',
-          text: 'Request was blocked by safety rules.',
-        });
-        return;
-      }
-
-      // Fallback for direct results without task wrapper
-      if ((exec as any).result) {
-        appendMessage({
-          id: `result-${Date.now()}`,
-          sender: 'assistant',
-          text: `AI response:\n${JSON.stringify((exec as any).result, null, 2)}`,
-        });
-      }
+            text: `${resp.reply}${toolSummary}`,
+            toolResults: resp.tool_results,
+            usedTools: resp.used_tools,
+          },
+        ],
+      }));
     } catch (error) {
-      appendMessage({
+      appendMessage(workspaceId, {
         id: `assistant-${Date.now()}`,
         sender: 'assistant',
-        text: 'Chat service unavailable. Please try again.',
+        text: 'Copilot is unavailable. Please try again.',
       });
     } finally {
       setIsSending(false);
     }
   };
 
-  const startTask = (task: AgentTask) => {
-    setTasks((prev) => ({ ...prev, [task.id]: task }));
-    setActiveTaskId(task.id);
-    appendMessage({
-      id: `task-${task.id}`,
-      sender: 'assistant',
-      text: `AI started: ${task.description}`,
+  const startTask = (workspaceId: string, task: AgentTask) => {
+    setWorkspaceState((prev) => {
+      const ws = prev[workspaceId] ?? createWorkspaceState();
+      return {
+        ...prev,
+        [workspaceId]: {
+          ...ws,
+          tasks: { ...ws.tasks, [task.id]: task },
+          activeTaskId: task.id,
+          messages: [
+            ...ws.messages,
+            {
+              id: `task-${task.id}`,
+              sender: 'assistant',
+              text: `AI started: ${task.description}`,
+            },
+          ],
+        },
+      };
     });
   };
 
   const handleQuickAction = async (action: string) => {
+    const workspaceId = selectedApplicationId || sampleApplications[0]?.id || 'default';
     if (action === 'run_orchestrator') {
       await handleRunOrchestrator();
       return;
@@ -365,14 +519,20 @@ const StaffCopilot = () => {
     if (action === 'check_status') {
       if (activeTaskId) {
         const data = await fetchTaskStatus(activeTaskId);
-        setTasks((prev) => ({ ...prev, [activeTaskId]: data }));
-        appendMessage({
+        setWorkspaceState((prev) => {
+          const ws = prev[workspaceId] ?? createWorkspaceState();
+          return {
+            ...prev,
+            [workspaceId]: { ...ws, tasks: { ...ws.tasks, [activeTaskId]: data } },
+          };
+        });
+        appendMessage(workspaceId, {
           id: `status-${Date.now()}`,
           sender: 'assistant',
           text: `AI response: latest status for ${activeTaskId} is ${data.status}`,
         });
       } else {
-        appendMessage({
+        appendMessage(workspaceId, {
           id: `status-${Date.now()}`,
           sender: 'assistant',
           text: 'AI response: no active task to refresh.',
@@ -380,31 +540,37 @@ const StaffCopilot = () => {
       }
       return;
     }
-    appendMessage({
-      id: `action-${Date.now()}`,
-      sender: 'assistant',
-      text: 'AI response: this quick action is not yet wired. Use the chat box to request it.',
-    });
+    const quickPrompts: Record<string, string> = {
+      mongo_get_application: `Fetch and summarize application ${selectedApplicationId || 'latest known id'}.`,
+      mongo_get_documents: `Fetch documents for application ${selectedApplicationId || 'latest'} and highlight gaps.`,
+      mongo_search_applications: 'Search recent applications and surface any high-risk or pending items.',
+      analytics_loans_count: 'Provide loan counts for the last 30 days.',
+      analytics_status_counts: 'Provide loan status breakdown for the last 30 days.',
+      analytics_loans_trend: 'Provide the loan application trend for the last 30 days.',
+    };
+    await handleSend(quickPrompts[action] || `Handle this request using tools: ${action}`);
   };
 
   const handleRunOrchestrator = async (app?: SampleApplication) => {
     const targetApp = app ?? selectedApplication ?? sampleApplications[0];
     if (!targetApp) {
-      appendMessage({
+      const workspaceId = selectedApplicationId || sampleApplications[0]?.id || 'default';
+      appendMessage(workspaceId, {
         id: `error-${Date.now()}`,
         sender: 'assistant',
         text: 'No application selected to run the orchestrator.',
       });
       return;
     }
-    setSelectedApplicationId(targetApp.id);
+    const workspaceId = targetApp.id;
+    setSelectedApplicationId(workspaceId);
     setIsRunningAction(true);
     try {
       const payload = buildPayload(targetApp);
       const task = await startOrchestration(targetApp.id, payload);
-      startTask(task);
+      startTask(workspaceId, task);
     } catch (error) {
-      appendMessage({
+      appendMessage(workspaceId, {
         id: `error-${Date.now()}`,
         sender: 'assistant',
         text: 'Could not start orchestrator. Please check backend connectivity.',
@@ -444,6 +610,24 @@ const StaffCopilot = () => {
           <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
             {msg.text}
           </Typography>
+          {msg.toolResults && msg.toolResults.length > 0 && (
+            <Stack mt={1} gap={1}>
+              {msg.toolResults.map((tool) => (
+                <Paper
+                  key={`${msg.id}-${tool.name}`}
+                  variant="outlined"
+                  sx={{ p: 1, bgcolor: '#0b162d', borderColor: '#1e293b' }}
+                >
+                  <Typography variant="caption" color="#a5f3fc" sx={{ display: 'block', fontWeight: 700, mb: 0.5 }}>
+                    Tool • {tool.name}
+                  </Typography>
+                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }} color="#e2e8f0">
+                    {formatToolResult(tool)}
+                  </Typography>
+                </Paper>
+              ))}
+            </Stack>
+          )}
           {msg.actions && (
             <Stack direction="row" gap={1} mt={1} flexWrap="wrap">
               {msg.actions.map((action) => (
@@ -594,6 +778,22 @@ const StaffCopilot = () => {
               <Chip label="Agents" size="small" color="info" />
             </Stack>
           </Stack>
+          {isBusy && (
+            <Stack direction="row" alignItems="center" gap={1} mt={1.5}>
+              <LinearProgress
+                sx={{
+                  flex: 1,
+                  height: 6,
+                  borderRadius: 999,
+                  bgcolor: '#0b162d',
+                  '& .MuiLinearProgress-bar': { bgcolor: '#38bdf8' },
+                }}
+              />
+              <Typography variant="caption" color="#94a3b8">
+                Copilot is working…
+              </Typography>
+            </Stack>
+          )}
         </Box>
 
         {selectedApplication && (
@@ -625,6 +825,17 @@ const StaffCopilot = () => {
           {messages.map(renderMessage)}
         </Box>
 
+        {isSending && (
+          <Box sx={{ px: 2, py: 1, borderTop: '1px solid #1e293b', bgcolor: '#0b162d' }}>
+            <Stack direction="row" alignItems="center" gap={1}>
+              <CircularProgress size={16} sx={{ color: '#38bdf8' }} />
+              <Typography variant="body2" color="#94a3b8">
+                Copilot is generating a response...
+              </Typography>
+            </Stack>
+          </Box>
+        )}
+
         <Divider sx={{ borderColor: '#1e293b' }} />
 
         <Box sx={{ p: 2 }}>
@@ -652,7 +863,7 @@ const StaffCopilot = () => {
                 },
               }}
             />
-            <IconButton color="primary" onClick={handleSend} disabled={isSending}>
+            <IconButton color="primary" onClick={() => handleSend()} disabled={isSending}>
               <SendIcon />
             </IconButton>
           </Stack>
@@ -687,7 +898,13 @@ const StaffCopilot = () => {
                     size="small"
                     onClick={async () => {
                       const data = await fetchTaskStatus(activeTask.id);
-                      setTasks((prev) => ({ ...prev, [activeTask.id]: data }));
+                      setWorkspaceState((prev) => {
+                        const ws = prev[selectedApplicationId] ?? createWorkspaceState();
+                        return {
+                          ...prev,
+                          [selectedApplicationId]: { ...ws, tasks: { ...ws.tasks, [activeTask.id]: data } },
+                        };
+                      });
                     }}
                     sx={{ color: '#c084fc' }}
                   >

@@ -10,11 +10,13 @@ from backend.app.core import mongo_tool
 from backend.app.core.database import get_db
 from backend.app.services.action_planner import ALLOW_ACTIONS, plan_intent
 from backend.app.services.agent_service import agent_service
+from backend.app.services.copilot_agent import copilot_agent
 
 
 class ChatRequest(BaseModel):
     prompt: str
     context: Optional[Dict[str, Any]] = None
+    session_id: Optional[str] = None
 
 
 class ActionRequest(BaseModel):
@@ -39,12 +41,17 @@ router = APIRouter(prefix="/agent", tags=["agent"])
 
 
 @router.post("/chat")
-async def chat(req: ChatRequest):
+async def chat(req: ChatRequest, db: Database = Depends(get_db)):
     """
-    Simple chat endpoint exposing available actions and context echo.
-    Replace implementation with real LLM-backed responses as needed.
+    Copilot chat entrypoint backed by Gemini + tool calling.
+    Returns a session id to maintain conversational context across turns.
     """
-    return await agent_service.chat(req.prompt, req.context)
+    return await copilot_agent.chat(
+        req.prompt,
+        db=db,
+        context=req.context,
+        session_id=req.session_id,
+    )
 
 
 @router.post("/actions")
