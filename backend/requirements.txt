@@ -1,7 +1,8 @@
 fastapi
 uvicorn[standard]
+pymongo
 sqlalchemy
-psycopg2-binary
+mongomock
 python-dotenv
 google-genai
 httpx

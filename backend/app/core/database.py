@@ -1,18 +1,32 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from typing import Generator
+
+from pymongo import MongoClient
+from pymongo.database import Database
+
 from backend.app.core.config import settings
 
-SQLALCHEMY_DATABASE_URL = settings.get_database_url()
+# Singleton Mongo client for the app process
+_client: MongoClient = MongoClient(settings.get_mongo_uri())
+_database: Database = _client[settings.MONGODB_DB]
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base = declarative_base()
-
-def get_db():
-    db = SessionLocal()
+def get_db() -> Generator[Database, None, None]:
+    """
+    FastAPI dependency that yields the shared Mongo database.
+    """
     try:
-        yield db
+        yield _database
     finally:
-        db.close()
+        # MongoClient maintains its own pool; nothing to clean per-request.
+        pass
+
+
+def get_collection(name: str):
+    return _database[name]
+
+
+def close_db_client() -> None:
+    """
+    Close the Mongo client; useful for tests or shutdown hooks.
+    """
+    _client.close()

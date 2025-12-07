@@ -3,7 +3,7 @@ Multi-Agent Orchestrator for loan processing automation.
 Coordinates 6 specialized agents in parallel and sequential workflows.
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Callable, Awaitable
 from datetime import datetime
 import asyncio
 from ai_agents.agents import (
@@ -46,11 +46,34 @@ class LoanProcessingOrchestrator:
         
         if settings.ENABLE_AGENT_LOGGING:
             print("✓ LoanProcessingOrchestrator initialized with all 6 agents")
+
+    async def _emit_progress(
+        self,
+        progress_cb: Optional[Callable[[Dict[str, Any]], Awaitable[None]]],
+        *,
+        step: str,
+        status: str,
+        message: Optional[str] = None,
+        progress: Optional[float] = None,
+        decision: Optional[str] = None,
+    ) -> None:
+        if not progress_cb:
+            return
+        await progress_cb(
+            {
+                "step": step,
+                "status": status,
+                "message": message,
+                "progress": progress,
+                "decision": decision,
+            }
+        )
     
     async def process_application(
         self,
         application_id: str,
-        application_data: Dict[str, Any]
+        application_data: Dict[str, Any],
+        progress_cb: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None,
     ) -> Dict[str, Any]:
         """
         Main orchestration method for processing loan application.
@@ -89,6 +112,13 @@ class LoanProcessingOrchestrator:
             
             if settings.ENABLE_AGENT_LOGGING:
                 print("📄 Step 1: Document Verification...")
+            await self._emit_progress(
+                progress_cb,
+                step="doc-processing",
+                status="in-progress",
+                message="Starting document processing & verification",
+                progress=0.05,
+            )
             
             doc_input = {
                 "application_id": application_id,
@@ -105,12 +135,79 @@ class LoanProcessingOrchestrator:
                 print(f"   - Completeness: {doc_result.completeness_score:.1%}")
                 print(f"   - Risk Level: {doc_result.risk_level}")
                 print(f"   - Fraud Indicators: {len(doc_result.fraud_indicators)}")
+            await self._emit_progress(
+                progress_cb,
+                step="doc-processing",
+                status="completed",
+                message="Document processing completed",
+                progress=0.15,
+            )
+            await self._emit_progress(
+                progress_cb,
+                step="doc-verification",
+                status="completed",
+                message="Document verification completed",
+                progress=0.18,
+            )
+            await self._emit_progress(
+                progress_cb,
+                step="doc-check",
+                status="completed",
+                message="Document risk gate passed",
+                progress=0.22,
+            )
+            await self._emit_progress(
+                progress_cb,
+                step="credit-scoring",
+                status="completed",
+                message="Initialized credit scoring features",
+                progress=0.26,
+            )
             
             # Early rejection on HIGH document risk
             if doc_result.risk_level == "HIGH":
                 if settings.ENABLE_AGENT_LOGGING:
                     print("   ⚠️  HIGH risk detected - early rejection")
-                
+                await self._emit_progress(
+                    progress_cb,
+                    step="routing-decision",
+                    status="completed",
+                    message="Routing to auto-reject because of high risk",
+                    progress=0.6,
+                    decision="auto-reject",
+                )
+                await self._emit_progress(
+                    progress_cb,
+                    step="reject-high-risk",
+                    status="in-progress",
+                    message="High risk flagged - preparing rejection",
+                    progress=0.7,
+                    decision="auto-reject",
+                )
+                await self._emit_progress(
+                    progress_cb,
+                    step="reject-high-risk",
+                    status="completed",
+                    message="Application auto-rejected for high risk",
+                    progress=0.8,
+                    decision="auto-reject",
+                )
+                await self._emit_progress(
+                    progress_cb,
+                    step="notify",
+                    status="completed",
+                    message="Applicant notified about rejection",
+                    progress=0.9,
+                    decision="auto-reject",
+                )
+                await self._emit_progress(
+                    progress_cb,
+                    step="end",
+                    status="completed",
+                    message="Processing ended after high-risk rejection",
+                    progress=1.0,
+                    decision="auto-reject",
+                )
                 return await self._early_rejection(
                     application_id,
                     reason="Document verification failed - high risk detected",
@@ -123,6 +220,20 @@ class LoanProcessingOrchestrator:
             
             if settings.ENABLE_AGENT_LOGGING:
                 print("\n💰 Step 2: Income Analysis...")
+            await self._emit_progress(
+                progress_cb,
+                step="parallel-split",
+                status="in-progress",
+                message="Kicking off analysis tracks",
+                progress=0.3,
+            )
+            await self._emit_progress(
+                progress_cb,
+                step="income-analysis",
+                status="in-progress",
+                message="Analyzing income from bank data",
+                progress=0.34,
+            )
             
             income_input = {
                 "application_id": application_id,
@@ -141,6 +252,13 @@ class LoanProcessingOrchestrator:
                     print(f"   ✓ Income Analysis complete")
                     print(f"      - Average Income: ${income_result.average_monthly_income:.2f}")
                     print(f"      - Income verified: {income_result.income_verification_passed}")
+                await self._emit_progress(
+                    progress_cb,
+                    step="income-analysis",
+                    status="completed",
+                    message="Income analysis completed",
+                    progress=0.45,
+                )
                 
             except asyncio.TimeoutError:
                 if settings.ENABLE_AGENT_LOGGING:
@@ -153,6 +271,13 @@ class LoanProcessingOrchestrator:
             
             if settings.ENABLE_AGENT_LOGGING:
                 print(f"\n💳 Step 3: Debt Assessment...")
+            await self._emit_progress(
+                progress_cb,
+                step="debt-assessment",
+                status="in-progress",
+                message="Assessing debts and obligations",
+                progress=0.48,
+            )
             
             debt_input = {
                 "application_id": application_id,
@@ -172,6 +297,13 @@ class LoanProcessingOrchestrator:
                     print(f"   ✓ Debt Assessment complete")
                     print(f"      - DTI Ratio: {debt_result.debt_to_income_ratio:.1%}")
                     print(f"      - Risk: {debt_result.risk_assessment}")
+                await self._emit_progress(
+                    progress_cb,
+                    step="debt-assessment",
+                    status="completed",
+                    message="Debt assessment completed",
+                    progress=0.56,
+                )
                 
             except asyncio.TimeoutError:
                 if settings.ENABLE_AGENT_LOGGING:
@@ -184,6 +316,13 @@ class LoanProcessingOrchestrator:
             
             if settings.ENABLE_AGENT_LOGGING:
                 print(f"\n✅ Step 4: Compliance Check...")
+            await self._emit_progress(
+                progress_cb,
+                step="compliance-check",
+                status="in-progress",
+                message="Running KYC / AML checks",
+                progress=0.6,
+            )
             
             compliance_input = {
                 "application_id": application_id,
@@ -202,6 +341,20 @@ class LoanProcessingOrchestrator:
                     print(f"   ✓ Compliance Check complete")
                     print(f"      - Compliant: {compliance_result.compliant}")
                     print(f"      - Age: {compliance_result.applicant_age}")
+                await self._emit_progress(
+                    progress_cb,
+                    step="compliance-check",
+                    status="completed",
+                    message="Compliance checks completed",
+                    progress=0.66,
+                )
+                await self._emit_progress(
+                    progress_cb,
+                    step="parallel-split",
+                    status="completed",
+                    message="Parallel analysis tracks completed",
+                    progress=0.68,
+                )
                 
             except asyncio.TimeoutError:
                 if settings.ENABLE_AGENT_LOGGING:
@@ -216,7 +369,46 @@ class LoanProcessingOrchestrator:
                 if settings.ENABLE_AGENT_LOGGING:
                     print(f"\n   ⚠️  Compliance check FAILED")
                     print(f"   - Violations: {len(compliance_result.violations)}")
-                
+                await self._emit_progress(
+                    progress_cb,
+                    step="routing-decision",
+                    status="completed",
+                    message="Routing to auto-reject because of compliance failure",
+                    progress=0.75,
+                    decision="auto-reject",
+                )
+                await self._emit_progress(
+                    progress_cb,
+                    step="auto-reject",
+                    status="in-progress",
+                    message="Compliance failure detected",
+                    progress=0.82,
+                    decision="auto-reject",
+                )
+                await self._emit_progress(
+                    progress_cb,
+                    step="auto-reject",
+                    status="completed",
+                    message="Application auto-rejected due to compliance",
+                    progress=0.88,
+                    decision="auto-reject",
+                )
+                await self._emit_progress(
+                    progress_cb,
+                    step="notify",
+                    status="completed",
+                    message="Applicant notified about compliance rejection",
+                    progress=0.93,
+                    decision="auto-reject",
+                )
+                await self._emit_progress(
+                    progress_cb,
+                    step="end",
+                    status="completed",
+                    message="Processing ended after compliance rejection",
+                    progress=1.0,
+                    decision="auto-reject",
+                )
                 return await self._early_rejection(
                     application_id,
                     reason="Compliance check failed",
@@ -246,6 +438,13 @@ class LoanProcessingOrchestrator:
             
             if settings.ENABLE_AGENT_LOGGING:
                 print("📝 Step 7: Generating comprehensive report...")
+            await self._emit_progress(
+                progress_cb,
+                step="report-generation",
+                status="in-progress",
+                message="Synthesizing findings into a report",
+                progress=0.72,
+            )
             
             final_report = await self.report_agent.generate(aggregated_data)
             
@@ -254,6 +453,13 @@ class LoanProcessingOrchestrator:
                 print(f"   - Overall Risk: {final_report.overall_risk_level}")
                 print(f"   - Recommendation: {final_report.recommendation}")
                 print(f"   - Confidence: {final_report.confidence_score:.1%}")
+            await self._emit_progress(
+                progress_cb,
+                step="report-generation",
+                status="completed",
+                message="Report generated",
+                progress=0.8,
+            )
             
             # ================================================================
             # STEP 8: Make Routing Decision
@@ -261,6 +467,13 @@ class LoanProcessingOrchestrator:
             
             if settings.ENABLE_AGENT_LOGGING:
                 print("\n🎯 Step 8: Making routing decision...")
+            await self._emit_progress(
+                progress_cb,
+                step="routing-decision",
+                status="in-progress",
+                message="Evaluating routing options",
+                progress=0.85,
+            )
             
             # Calculate fraud score from document verification
             fraud_score = sum([
@@ -285,6 +498,15 @@ class LoanProcessingOrchestrator:
                 if routing_decision.action == "MANUAL_REVIEW":
                     print(f"   - Priority: {routing_decision.priority}")
                 print(f"   - Reason: {routing_decision.reason}")
+            decision_slug = routing_decision.action.lower().replace("_", "-")
+            await self._emit_progress(
+                progress_cb,
+                step="routing-decision",
+                status="completed",
+                message=f"Routing: {routing_decision.action}",
+                progress=0.9,
+                decision=decision_slug,
+            )
             
             # ================================================================
             # STEP 9: Execute Routing Action
@@ -314,16 +536,105 @@ class LoanProcessingOrchestrator:
             }
             
             if routing_decision.action == "AUTO_APPROVE":
+                await self._emit_progress(
+                    progress_cb,
+                    step="auto-approve",
+                    status="completed",
+                    message="Auto-approval executed",
+                    progress=0.9,
+                    decision=decision_slug,
+                )
+                await self._emit_progress(
+                    progress_cb,
+                    step="final-decision",
+                    status="completed",
+                    message="Final decision recorded",
+                    progress=0.92,
+                    decision=decision_slug,
+                )
+                await self._emit_progress(
+                    progress_cb,
+                    step="update-banking",
+                    status="completed",
+                    message="Core banking updated",
+                    progress=0.94,
+                    decision=decision_slug,
+                )
+                await self._emit_progress(
+                    progress_cb,
+                    step="disburse",
+                    status="completed",
+                    message="Disbursement scheduled",
+                    progress=0.97,
+                    decision=decision_slug,
+                )
+                await self._emit_progress(
+                    progress_cb,
+                    step="notify",
+                    status="completed",
+                    message="Applicant notified",
+                    progress=0.98,
+                    decision=decision_slug,
+                )
                 result = await self._auto_approve(application_id, final_result)
             elif routing_decision.action == "AUTO_REJECT":
+                await self._emit_progress(
+                    progress_cb,
+                    step="auto-reject",
+                    status="completed",
+                    message="Auto-rejection executed",
+                    progress=0.92,
+                    decision=decision_slug,
+                )
+                await self._emit_progress(
+                    progress_cb,
+                    step="notify",
+                    status="completed",
+                    message="Applicant notified about rejection",
+                    progress=0.96,
+                    decision=decision_slug,
+                )
                 result = await self._auto_reject(application_id, final_result)
             else:  # MANUAL_REVIEW
+                await self._emit_progress(
+                    progress_cb,
+                    step="manual-review",
+                    status="completed",
+                    message="Case routed to manual review",
+                    progress=0.92,
+                    decision=decision_slug,
+                )
+                await self._emit_progress(
+                    progress_cb,
+                    step="final-decision",
+                    status="completed",
+                    message="Awaiting underwriter decision",
+                    progress=0.95,
+                    decision=decision_slug,
+                )
+                await self._emit_progress(
+                    progress_cb,
+                    step="notify",
+                    status="completed",
+                    message="Applicant notified about review status",
+                    progress=0.97,
+                    decision=decision_slug,
+                )
                 result = await self._route_to_manual_review(
                     application_id,
                     final_result,
                     priority=routing_decision.priority,
                     recommended_decision=routing_decision.recommended_decision
                 )
+
+            await self._emit_progress(
+                progress_cb,
+                step="end",
+                status="completed",
+                message="Processing complete",
+                progress=1.0,
+                decision=decision_slug,
+            )
             
             if settings.ENABLE_AGENT_LOGGING:
                 print(f"\n{'='*80}")

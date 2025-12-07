@@ -39,7 +39,7 @@ import DetailPanel from './DetailPanel';
 import { createSimulation, initialStatuses, type SimulationStatusMap } from './simulation';
 import { sampleApplications, type SampleApplication } from '../../data/sampleApplications';
 import { useLocation } from 'react-router-dom';
-import api from '../../api';
+import api, { type AgentTask, fetchLoanAnalytics, fetchTaskStatus, startOrchestration, type LoanAnalytics, type TaskMessage } from '../../api';
 
 const StaffDashboard = () => {
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -60,6 +60,11 @@ const StaffDashboard = () => {
     });
     const [viewMode, setViewMode] = useState<'business' | 'technical'>('business');
     const [showDetails, setShowDetails] = useState<boolean>(false);
+    const [activeTask, setActiveTask] = useState<AgentTask | null>(null);
+    const [analytics, setAnalytics] = useState<LoanAnalytics | null>(null);
+    const [hasStartedSimulation, setHasStartedSimulation] = useState<boolean>(false);
+    const [loadingTask, setLoadingTask] = useState<boolean>(false);
+    const [isRealProcessing, setIsRealProcessing] = useState<boolean>(false);
     const location = useLocation();
     const cancelRef = useRef<(() => void) | null>(null);
     const timerRef = useRef<number | null>(null);
@@ -130,19 +135,35 @@ const StaffDashboard = () => {
         loadApplications();
     }, []);
 
-    // Auto start simulation on application change
+    useEffect(() => {
+        const loadAnalytics = async () => {
+            try {
+                const data = await fetchLoanAnalytics();
+                setAnalytics(data);
+            } catch (_error) {
+                // keep analytics optional
+            }
+        };
+        loadAnalytics();
+    }, []);
+
     const runSimulation = (appId: string) => {
         const app = applicationMap[appId];
         if (!app) return;
 
+        setIsRealProcessing(false);
+        setActiveTask(null);
         if (cancelRef.current) cancelRef.current();
+        cancelRef.current = null;
         if (timerRef.current) window.clearInterval(timerRef.current);
+        timerRef.current = null;
         setSelectedNode(null);
         setStatuses(initialStatuses());
-        setLogs([`Application ${app.id} selected (${app.scenario.replace(/_/g, ' ')})`]);
+        setLogs([`Simulation started for ${app.id} (${app.scenario.replace(/_/g, ' ')})`]);
         setActiveStep(undefined);
         setElapsedMs(0);
         setDecisionPath(undefined);
+        setHasStartedSimulation(true);
 
         cancelRef.current = createSimulation(app, (update) => {
             setStatuses(update.statuses);
@@ -160,14 +181,31 @@ const StaffDashboard = () => {
     };
 
     useEffect(() => {
-        if (selectedAppId) {
-            runSimulation(selectedAppId);
-        }
+        const app = applicationMap[selectedAppId];
+        if (!app) return;
+
+        if (cancelRef.current) cancelRef.current();
+        cancelRef.current = null;
+        if (timerRef.current) window.clearInterval(timerRef.current);
+        timerRef.current = null;
+
+        setIsRealProcessing(false);
+        setActiveTask(null);
+        setHasStartedSimulation(false);
+        setSelectedNode(null);
+        setStatuses(initialStatuses());
+        setLogs([`Application ${app.id} selected (${app.scenario.replace(/_/g, ' ')}) — click Start simulation to run`]);
+        setActiveStep(undefined);
+        setElapsedMs(0);
+        setDecisionPath(undefined);
+    }, [applicationMap, selectedAppId]);
+
+    useEffect(() => {
         return () => {
             if (cancelRef.current) cancelRef.current();
             if (timerRef.current) window.clearInterval(timerRef.current);
         };
-    }, [selectedAppId]);
+    }, []);
 
     const handleNodeClick = (node: Node) => {
         setSelectedNode(node);
@@ -180,12 +218,32 @@ const StaffDashboard = () => {
     const isOpen = selectedNode !== null;
     const selectedApp = applicationMap[selectedAppId];
 
-    const restart = () => {
+    const startSimulation = () => {
         runSimulation(selectedAppId);
     };
 
     const formatCurrency = (value: number) => `$${value.toLocaleString()}`;
     const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
+
+    const decisionFromTask = (task: AgentTask | null) => {
+        const raw = task?.decision ?? (task?.result as any)?.routing_action;
+        if (!raw) return undefined;
+        const normalized = String(raw).toLowerCase();
+        if (normalized.includes('approve')) return 'auto-approve';
+        if (normalized.includes('reject')) return 'auto-reject';
+        if (normalized.includes('manual')) return 'manual-review';
+        return undefined;
+    };
+
+    const formatTaskLogs = (messages: TaskMessage[]) => {
+        return messages.map((msg) => {
+            const ts = msg.ts ? new Date(msg.ts).toLocaleTimeString() : '';
+            const step = msg.step ? `[${msg.step}] ` : '';
+            const text = msg.text ?? msg.status ?? 'update';
+            const prefix = ts ? `${ts} ` : '';
+            return `${prefix}${step}${text}`.trim();
+        });
+    };
 
     const formattedElapsed = useMemo(() => {
         const totalSeconds = Math.floor(elapsedMs / 1000);
@@ -193,6 +251,110 @@ const StaffDashboard = () => {
         const seconds = (totalSeconds % 60).toString().padStart(2, '0');
         return `${minutes}:${seconds}`;
     }, [elapsedMs]);
+
+    const buildPayload = (app: SampleApplication) => ({
+        loan_application: {
+            id: app.id,
+            applicant_name: app.applicantName,
+            requested_amount: app.requestedAmount,
+            product_type: app.productType,
+            term_months: app.termMonths,
+            purpose: app.purpose,
+            channel: app.channel,
+            financial_profile: {
+                other_monthly_debt_payments: Math.round(app.requestedAmount * 0.02),
+            },
+            employment_details: {
+                stated_gross_monthly_income: app.incomeNetMonthly,
+            },
+        },
+        id_document: {
+            id_number: app.id,
+            name: app.applicantName,
+        },
+        bank_statement: {
+            summary: app.summary,
+            credit_score: app.creditScore,
+            dti: app.dti,
+        },
+        payslip: {
+            monthly_income: app.incomeNetMonthly,
+        },
+        credit_score: app.creditScore,
+    });
+
+    const runRealProcessing = async () => {
+        const app = selectedApp;
+        if (!app) return;
+        setIsRealProcessing(true);
+        setHasStartedSimulation(false);
+        setSelectedNode(null);
+        setStatuses(initialStatuses());
+        setLogs([`Real processing started for ${app.id}`]);
+        setActiveStep(undefined);
+        setElapsedMs(0);
+        setDecisionPath(undefined);
+        if (cancelRef.current) cancelRef.current();
+        cancelRef.current = null;
+        if (timerRef.current) window.clearInterval(timerRef.current);
+        const start = Date.now();
+        timerRef.current = window.setInterval(() => {
+            setElapsedMs(Date.now() - start);
+        }, 1000);
+        setLoadingTask(true);
+        try {
+            const task = await startOrchestration(app.id, buildPayload(app));
+            setActiveTask(task);
+            setUiToast({ open: true, message: `Started orchestration for ${app.id}`, severity: 'info' });
+        } catch (_error) {
+            setUiToast({ open: true, message: 'Could not start orchestrator', severity: 'error' });
+            setIsRealProcessing(false);
+            if (timerRef.current) {
+                window.clearInterval(timerRef.current);
+                timerRef.current = null;
+            }
+        } finally {
+            setLoadingTask(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!activeTask || ['completed', 'failed'].includes(activeTask.status)) return undefined;
+        const interval = window.setInterval(async () => {
+            try {
+                const refreshed = await fetchTaskStatus(activeTask.id);
+                setActiveTask(refreshed);
+            } catch (_error) {
+                // ignore polling errors
+            }
+        }, 2000);
+        return () => window.clearInterval(interval);
+    }, [activeTask]);
+
+    useEffect(() => {
+        if (!activeTask || !isRealProcessing) return;
+        if (activeTask.status_map) {
+            setStatuses(activeTask.status_map as SimulationStatusMap);
+        }
+        const latestStep = activeTask.active_step ?? undefined;
+        if (latestStep) {
+            setActiveStep(latestStep);
+        }
+        const derivedDecision = decisionFromTask(activeTask);
+        if (derivedDecision) {
+            setDecisionPath(derivedDecision);
+        }
+        if (Array.isArray(activeTask.messages) && activeTask.messages.length > 0) {
+            setLogs(formatTaskLogs(activeTask.messages));
+        }
+        if (['completed', 'failed'].includes(activeTask.status)) {
+            setIsRealProcessing(false);
+            if (timerRef.current) {
+                window.clearInterval(timerRef.current);
+                timerRef.current = null;
+            }
+        }
+    }, [activeTask, isRealProcessing]);
 
     const riskScore = useMemo(() => {
         if (!selectedApp) return 0;
@@ -267,8 +429,9 @@ const StaffDashboard = () => {
                 label: 'SLA',
                 value: `${Math.min(99, Math.round((elapsedMs / (15 * 60 * 1000)) * 100))}%`,
             },
-        ];
-    }, [elapsedMs, riskScore, selectedApp, stageLabel]);
+            analytics ? { label: 'Loans (30d)', value: analytics.total } : null,
+        ].filter(Boolean) as { label: string; value: string | number }[];
+    }, [analytics, elapsedMs, riskScore, selectedApp, stageLabel]);
 
     const overallProgress = useMemo(() => {
         const values = Object.values(statuses);
@@ -392,11 +555,21 @@ const StaffDashboard = () => {
                                 variant="outlined"
                                 size="small"
                                 startIcon={<RestartAltIcon />}
-                                onClick={restart}
+                                onClick={startSimulation}
+                                disabled={!selectedAppId || isRealProcessing}
                             >
-                                Restart
+                                {hasStartedSimulation ? 'Restart simulation' : 'Start simulation'}
+                            </Button>
+                            <Button
+                                variant="contained"
+                                size="small"
+                                onClick={runRealProcessing}
+                                disabled={loadingTask || (activeTask ? ['queued', 'running'].includes(activeTask.status) : false)}
+                            >
+                                Run real processing
                             </Button>
                             {loadingApps && <CircularProgress size={18} />}
+                            {loadingTask && <CircularProgress size={18} />}
                         </Stack>
                     </Stack>
 
@@ -442,6 +615,39 @@ const StaffDashboard = () => {
                             />
                         </Paper>
                     </Stack>
+
+                    {activeTask && (
+                        <Paper
+                            variant="outlined"
+                            sx={{
+                                px: 1.5,
+                                py: 1,
+                                borderRadius: 1.5,
+                                bgcolor: 'background.default',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                            }}
+                        >
+                            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" sx={{ flexGrow: 1 }}>
+                                <Chip label={`Task: ${activeTask.action}`} size="small" color="primary" />
+                                <Chip label={`Status: ${activeTask.status}`} size="small" color="secondary" />
+                                <Typography variant="body2" color="text.secondary">
+                                    {activeTask.description}
+                                </Typography>
+                            </Stack>
+                            <Stack spacing={0.5} alignItems="flex-end">
+                                <LinearProgress
+                                    variant="determinate"
+                                    value={Math.round((activeTask.progress || 0) * 100)}
+                                    sx={{ width: 140, height: 8, borderRadius: 999 }}
+                                />
+                                <Typography variant="caption" color="text.secondary">
+                                    Updated {new Date(activeTask.updated_at).toLocaleTimeString()}
+                                </Typography>
+                            </Stack>
+                        </Paper>
+                    )}
 
                     <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                         <FormControl size="small" sx={{ minWidth: 220 }}>
@@ -593,7 +799,8 @@ const StaffDashboard = () => {
                                         statuses={statuses}
                                         activeStep={activeStep}
                                         viewMode={viewMode}
-                                        isSimulation
+                                        isSimulation={!isRealProcessing}
+                                        autoFocusActive={isRealProcessing}
                                     />
                                 </ReactFlowProvider>
                             </Box>

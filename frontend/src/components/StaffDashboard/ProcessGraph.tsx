@@ -37,6 +37,7 @@ interface ProcessGraphProps {
     activeStep?: string;
     viewMode: ViewMode;
     isSimulation?: boolean;
+    autoFocusActive?: boolean;
 }
 
 type NodeMeta = {
@@ -92,6 +93,46 @@ const nodeMeta: Record<string, NodeMeta> = {
     end: { phase: 'Funding', owner: 'System', sla: '< 5s', description: 'Process completed', role: 'automation' },
 };
 
+const businessMeta: Record<string, NodeMeta> = {
+    start: { phase: 'Intake', owner: 'System', sla: '< 5s', description: 'Process initiated', role: 'automation' },
+    'intake-packet': {
+        phase: 'Intake',
+        owner: 'Automation',
+        sla: '3m',
+        description: 'Document intake and verification',
+        role: 'automation',
+    },
+    'risk-screen': {
+        phase: 'Risk',
+        owner: 'Decision Engine',
+        sla: '2m',
+        description: 'Risk screening and scoring',
+        role: 'automation',
+    },
+    'analysis-bundle': {
+        phase: 'Risk',
+        owner: 'Risk / Compliance',
+        sla: '5m',
+        description: 'Income, debt, and compliance review',
+        role: 'underwriting',
+    },
+    'decision-band': {
+        phase: 'Decision',
+        owner: 'Decision Engine',
+        sla: '3m',
+        description: 'Routing, approvals, and overrides',
+        role: 'underwriting',
+    },
+    'funding-band': {
+        phase: 'Funding',
+        owner: 'Treasury / Comms',
+        sla: '4m',
+        description: 'Core updates and customer notifications',
+        role: 'external',
+    },
+    end: { phase: 'Funding', owner: 'System', sla: '< 5s', description: 'Process completed', role: 'automation' },
+};
+
 const technicalNodeDefs: NodeDefinition[] = [
     { id: 'start', label: 'START', type: 'startend', meta: nodeMeta.start },
     { id: 'doc-processing', label: 'Document Processing', subtitle: 'OCR, Extraction, Classification', type: 'process', meta: nodeMeta['doc-processing'] },
@@ -116,13 +157,13 @@ const technicalNodeDefs: NodeDefinition[] = [
 ];
 
 const businessNodeDefs: NodeDefinition[] = [
-    { id: 'start', label: 'START', type: 'startend', meta: nodeMeta.start },
+    { id: 'start', label: 'START', type: 'startend', meta: businessMeta.start },
     {
         id: 'intake-packet',
         label: 'Intake & Docs',
         subtitle: 'ID, POI, POA collected',
         type: 'process',
-        meta: { ...nodeMeta['doc-verification'], description: 'Document intake and verification' },
+        meta: businessMeta['intake-packet'],
         aggregateFrom: ['doc-processing', 'doc-verification'],
     },
     {
@@ -130,7 +171,7 @@ const businessNodeDefs: NodeDefinition[] = [
         label: 'Screening & Scoring',
         subtitle: 'Risk gates + score',
         type: 'process',
-        meta: { ...nodeMeta['doc-check'], description: 'Risk screening and scoring' },
+        meta: businessMeta['risk-screen'],
         aggregateFrom: ['doc-check', 'credit-scoring', 'reject-high-risk'],
     },
     {
@@ -138,7 +179,7 @@ const businessNodeDefs: NodeDefinition[] = [
         label: 'Income & Compliance',
         subtitle: '3 checks in progress',
         type: 'process',
-        meta: { ...nodeMeta['income-analysis'], description: 'Income, debt, and compliance review' },
+        meta: businessMeta['analysis-bundle'],
         aggregateFrom: ['parallel-split', 'income-analysis', 'debt-assessment', 'compliance-check'],
     },
     {
@@ -146,7 +187,7 @@ const businessNodeDefs: NodeDefinition[] = [
         label: 'Decisioning',
         subtitle: 'Auto / Manual / Reject',
         type: 'process',
-        meta: { ...nodeMeta['final-decision'], description: 'Routing, approvals, and overrides' },
+        meta: businessMeta['decision-band'],
         aggregateFrom: ['report-generation', 'routing-decision', 'auto-approve', 'manual-review', 'auto-reject', 'final-decision'],
     },
     {
@@ -154,10 +195,10 @@ const businessNodeDefs: NodeDefinition[] = [
         label: 'Funding & Notify',
         subtitle: 'Core push, disburse, comms',
         type: 'process',
-        meta: { ...nodeMeta['update-banking'], description: 'Core updates and customer comms' },
+        meta: businessMeta['funding-band'],
         aggregateFrom: ['update-banking', 'disburse', 'notify'],
     },
-    { id: 'end', label: 'END', type: 'startend', meta: nodeMeta.end },
+    { id: 'end', label: 'END', type: 'startend', meta: businessMeta.end },
 ];
 
 const statusStyles = {
@@ -171,6 +212,7 @@ const getStatusColor = (status?: string) => statusStyles[status as keyof typeof 
 const ProcessNode = ({ data, selected }: { data: any; selected: boolean }) => {
     const statusColors = getStatusColor(data.status);
     const dimmed = data.dimmed;
+    const isActive = data.isActive;
 
     const content = (
         <Box
@@ -182,12 +224,13 @@ const ProcessNode = ({ data, selected }: { data: any; selected: boolean }) => {
                 backgroundColor: statusColors.bg,
                 borderRadius: '10px',
                 textAlign: 'left',
-                boxShadow: selected ? '0 8px 18px rgba(0,0,0,0.18)' : '0 2px 8px rgba(0,0,0,0.08)',
+                boxShadow: selected || isActive ? '0 10px 22px rgba(0,0,0,0.16)' : '0 2px 8px rgba(0,0,0,0.08)',
                 transition: 'all 0.18s ease',
                 cursor: 'pointer',
                 position: 'relative',
                 opacity: dimmed ? 0.35 : 1,
                 filter: dimmed ? 'grayscale(0.35)' : 'none',
+                transform: isActive ? 'scale(1.03)' : 'scale(1)',
                 '&:hover': {
                     boxShadow: '0 10px 24px rgba(0,0,0,0.12)',
                     transform: 'translateY(-2px)',
@@ -429,7 +472,7 @@ const getPosition = (
     };
 };
 
-const ProcessGraph = ({ onNodeClick, statuses, activeStep, viewMode, isSimulation }: ProcessGraphProps) => {
+const ProcessGraph = ({ onNodeClick, statuses, activeStep, viewMode, isSimulation, autoFocusActive }: ProcessGraphProps) => {
     const [isMounted, setIsMounted] = useState(false);
     const [pathHistory, setPathHistory] = useState<string[]>([]);
     const [hiddenLanes, setHiddenLanes] = useState<Set<Role>>(new Set());
@@ -441,6 +484,7 @@ const ProcessGraph = ({ onNodeClick, statuses, activeStep, viewMode, isSimulatio
     const theme = useTheme();
     const isLgDown = useMediaQuery(theme.breakpoints.down('lg'));
     const isMdDown = useMediaQuery(theme.breakpoints.down('md'));
+    const isSmDown = useMediaQuery(theme.breakpoints.down('sm'));
     const reactFlowInstance = useReactFlow();
     const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
@@ -507,14 +551,14 @@ const ProcessGraph = ({ onNodeClick, statuses, activeStep, viewMode, isSimulatio
     }, [lanesForLayout, viewMode]);
 
     const layout = useMemo<Layout>(() => {
-        const columnWidth = isMdDown ? 220 : isLgDown ? 260 : 300;
-        const stackOffset = isMdDown ? 88 : 100;
-        const baseLaneHeight = viewMode === 'business' ? (isMdDown ? 220 : 260) : (isMdDown ? 300 : 340);
+        const columnWidth = isSmDown ? 180 : isMdDown ? 220 : isLgDown ? 260 : 300;
+        const stackOffset = isSmDown ? 72 : isMdDown ? 88 : 100;
+        const baseLaneHeight = viewMode === 'business' ? (isSmDown ? 200 : isMdDown ? 220 : 260) : (isSmDown ? 260 : isMdDown ? 300 : 340);
         const estimatedNodeHeight = viewMode === 'business' ? 120 : 170;
         const dynamicLaneHeight = 48 + estimatedNodeHeight + (maxStackPerCell - 1) * stackOffset;
         const laneHeight = Math.max(baseLaneHeight, dynamicLaneHeight);
-        const topOffset = isMdDown ? 110 : 130;
-        const leftOffset = isMdDown ? 60 : 80;
+        const topOffset = isSmDown ? 96 : isMdDown ? 110 : 130;
+        const leftOffset = isSmDown ? 40 : isMdDown ? 60 : 80;
 
         return {
             columnWidth,
@@ -704,6 +748,7 @@ const ProcessGraph = ({ onNodeClick, statuses, activeStep, viewMode, isSimulatio
                         isEnd: def.id === 'end',
                         dimmed: shouldDim,
                         inHistory,
+                        isActive,
                     },
                 };
             })
@@ -725,9 +770,22 @@ const ProcessGraph = ({ onNodeClick, statuses, activeStep, viewMode, isSimulatio
         const targetId = viewMode === 'business' ? mapStepToBusiness(activeStep) : activeStep;
         const node = derivedNodes.find((n) => n.id === targetId);
         if (node) {
-            reactFlowInstance.fitView({ nodes: [node], padding: 0.6, duration: 400 });
+            reactFlowInstance.fitView({ nodes: [node], padding: isSmDown ? 0.35 : 0.6, duration: 400 });
         }
-    }, [activeStep, derivedNodes, reactFlowInstance, viewMode]);
+    }, [activeStep, derivedNodes, reactFlowInstance, viewMode, isSmDown]);
+
+    useEffect(() => {
+        if (!autoFocusActive) return;
+        centerOnActive();
+    }, [autoFocusActive, centerOnActive, activeStep]);
+
+    useEffect(() => {
+        if (!derivedNodes.length) return;
+        reactFlowInstance.fitView({
+            padding: isSmDown ? 0.25 : 0.4,
+            duration: 300,
+        });
+    }, [reactFlowInstance, viewMode, layout.columnWidth, layout.laneHeight, lanesForLayout.length, isSmDown, derivedNodes.length]);
 
     useEffect(() => {
         if (focusedPhase === 'all') return;
@@ -746,6 +804,12 @@ const ProcessGraph = ({ onNodeClick, statuses, activeStep, viewMode, isSimulatio
         const mapped = viewMode === 'business' ? pathHistory.map(mapStepToBusiness).filter(Boolean) as string[] : pathHistory;
         return Array.from(new Set(mapped));
     }, [pathHistory, viewMode]);
+
+    const activePhase = useMemo(() => {
+        if (!activeStep) return null;
+        const def = technicalNodeDefs.find((d) => d.id === activeStep);
+        return def?.meta.phase ?? null;
+    }, [activeStep]);
 
     const phaseSummaries = useMemo(() => {
         const summaries = phaseOrder.map((phase) => ({
@@ -779,6 +843,12 @@ const ProcessGraph = ({ onNodeClick, statuses, activeStep, viewMode, isSimulatio
             return { ...s, progress, status, estimatedTimeRemaining };
         });
     }, [statuses]);
+
+    const handlePhaseClick = useCallback((phase: Phase) => {
+        setFocusedPhase((prev) => (prev === phase ? 'all' : phase));
+        setShowPathOnly(false);
+        setFadeFuture(false);
+    }, []);
 
     if (!isMounted) {
         return (
@@ -918,17 +988,24 @@ const ProcessGraph = ({ onNodeClick, statuses, activeStep, viewMode, isSimulatio
                         right: 0,
                         height: layout.topOffset - 16,
                         display: 'grid',
-                        gridTemplateColumns: `repeat(${phaseOrder.length}, ${layout.columnWidth}px)`,
+                        gridTemplateColumns: `repeat(${phaseOrder.length}, minmax(${isSmDown ? 160 : 200}px, ${layout.columnWidth}px))`,
                         pointerEvents: 'none',
                         zIndex: 10,
                         gap: 8,
                         px: 1,
                         backgroundColor: '#f8fafc',
                         paddingLeft: `${layout.leftOffset - 60}px`,
+                        overflowX: 'auto',
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: '#cbd5e1 transparent',
+                        overscrollBehaviorX: 'contain',
                     }}
                 >
                     {phaseSummaries.map((summary) => {
+                        const isFocused = focusedPhase === summary.phase;
+                        const isActivePhase = activePhase === summary.phase;
                         const color = summary.status === 'completed' ? '#28a745' : summary.status === 'in-progress' ? '#f59e0b' : '#94a3b8';
+                        const scale = isActivePhase ? 1.03 : summary.status === 'in-progress' ? 1.015 : 1;
                         return (
                             <Paper
                                 key={summary.phase}
@@ -937,8 +1014,28 @@ const ProcessGraph = ({ onNodeClick, statuses, activeStep, viewMode, isSimulatio
                                     p: 1.25,
                                     backgroundColor: '#ffffff',
                                     borderStyle: 'solid',
-                                    borderColor: isSimulation ? '#a78bfa' : 'divider',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+                                    borderColor: isActivePhase ? theme.palette.primary.main : isSimulation ? '#a78bfa' : 'divider',
+                                    boxShadow: isActivePhase
+                                        ? '0 10px 24px rgba(0,0,0,0.12)'
+                                        : '0 4px 12px rgba(0,0,0,0.04)',
+                                    cursor: 'pointer',
+                                    transition: 'transform 0.18s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+                                    outline: isFocused ? `2px solid ${theme.palette.primary.light}` : 'none',
+                                    pointerEvents: 'auto',
+                                    transform: `scale(${scale})`,
+                                    '&:hover': {
+                                        boxShadow: '0 12px 28px rgba(0,0,0,0.12)',
+                                        transform: `scale(${Math.max(scale, 1.03)})`,
+                                    },
+                                }}
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => handlePhaseClick(summary.phase)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        handlePhaseClick(summary.phase);
+                                    }
                                 }}
                             >
                                 <Stack spacing={0.5}>
@@ -972,7 +1069,17 @@ const ProcessGraph = ({ onNodeClick, statuses, activeStep, viewMode, isSimulatio
                                             sx={{ height: 22, fontSize: '10px', borderRadius: 999 }}
                                         />
                                     </Stack>
-                                    <LinearProgress variant="determinate" value={summary.progress} sx={{ height: 6, borderRadius: 999, bgcolor: '#e2e8f0' }} />
+                                    <LinearProgress
+                                        variant="determinate"
+                                        value={summary.progress}
+                                        sx={{
+                                            height: 6,
+                                            borderRadius: 999,
+                                            bgcolor: '#e2e8f0',
+                                            transition: 'transform 0.18s ease',
+                                            transform: isActivePhase ? 'scaleX(1.02)' : 'scaleX(1)',
+                                        }}
+                                    />
                                 </Stack>
                             </Paper>
                         );
@@ -1042,7 +1149,8 @@ const ProcessGraph = ({ onNodeClick, statuses, activeStep, viewMode, isSimulatio
                         position: 'relative',
                         zIndex: 5,
                         height: '100%',
-                        minWidth: phaseOrder.length * layout.columnWidth + layout.leftOffset,
+                        minWidth: '100%',
+                        maxWidth: '100%',
                         minHeight: lanesForLayout.length * layout.laneHeight + layout.topOffset + 120,
                     }}
                 >

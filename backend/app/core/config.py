@@ -2,17 +2,17 @@ from pydantic_settings import BaseSettings
 from typing import Optional
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
+
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Loan Processing Automation"
     API_V1_STR: str = "/api/v1"
     
-    POSTGRES_SERVER: str = "localhost"
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "password"
-    POSTGRES_DB: str = "loan_automation"
-    DATABASE_URL: Optional[str] = None
+    # MongoDB configuration
+    MONGODB_URI: str = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+    MONGODB_DB: str = os.getenv("MONGODB_DB", "loan_automation")
 
     GOOGLE_API_KEY: Optional[str] = os.getenv("GOOGLE_API_KEY")
     
@@ -26,9 +26,8 @@ class Settings(BaseSettings):
         case_sensitive = True
         env_file = ".env"
 
-    def get_database_url(self) -> str:
-        if self.DATABASE_URL:
-            return self.DATABASE_URL
-        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
+    def get_mongo_uri(self) -> str:
+        return self.MONGODB_URI
+
 
 settings = Settings()

@@ -1,7 +1,18 @@
-from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
+
 from backend.app.models.models import ApplicationStatus, DocumentType
+
+
+class MongoModel(BaseModel):
+    """
+    Base model for Mongo-backed responses with stringified ids.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 # Customer Schemas
 class CustomerBase(BaseModel):
@@ -10,33 +21,33 @@ class CustomerBase(BaseModel):
     email: str
     phone: Optional[str] = None
 
+
 class CustomerCreate(CustomerBase):
     pass
 
-class Customer(CustomerBase):
-    id: int
+
+class Customer(CustomerBase, MongoModel):
+    id: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
 
 # Document Schemas
 class DocumentBase(BaseModel):
     document_type: DocumentType
 
+
 class DocumentCreate(DocumentBase):
     pass
 
-class Document(DocumentBase):
-    id: int
-    application_id: int
+
+class Document(DocumentBase, MongoModel):
+    id: str
+    application_id: str
     file_path: str
     extracted_data: Optional[Dict[str, Any]] = None
     is_verified: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
 
 # Loan Application Schemas
 class LoanApplicationBase(BaseModel):
@@ -44,19 +55,19 @@ class LoanApplicationBase(BaseModel):
     loan_purpose: str
     loan_term_months: int
 
-class LoanApplicationCreate(LoanApplicationBase):
-    customer_id: int
 
-class LoanApplication(LoanApplicationBase):
-    id: int
-    customer_id: int
+class LoanApplicationCreate(LoanApplicationBase):
+    customer_id: str
+
+
+class LoanApplication(LoanApplicationBase, MongoModel):
+    id: str
+    customer_id: str
     status: ApplicationStatus
     created_at: datetime
     updated_at: Optional[datetime] = None
-    documents: List[Document] = []
+    documents: List[Document] = Field(default_factory=list)
 
-    class Config:
-        from_attributes = True
 
 # Credit Score Schemas
 class CreditScoreBase(BaseModel):
@@ -64,12 +75,11 @@ class CreditScoreBase(BaseModel):
     risk_level: str
     details: Dict[str, Any]
 
+
 class CreditScoreCreate(CreditScoreBase):
-    application_id: int
+    application_id: str
 
-class CreditScore(CreditScoreBase):
-    id: int
+
+class CreditScore(CreditScoreBase, MongoModel):
+    id: str
     created_at: datetime
-
-    class Config:
-        from_attributes = True
