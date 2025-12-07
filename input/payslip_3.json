@@ -1,0 +1,52 @@
+{
+    "document_type": "PAYSLIP",
+    "pay_period_start": "2025-11-01",
+    "pay_period_end": "2025-11-30",
+    "pay_date": "2025-11-30",
+    "employee": {
+        "employee_id": "PD-3051",
+        "full_name": "Priya Desai",
+        "national_id_number": "ID-135791113",
+        "address": {
+            "line1": "782 Lakeshore Drive",
+            "line2": "",
+            "city": "Chicago",
+            "state": "IL",
+            "postal_code": "60657",
+            "country": "US"
+        }
+    },
+    "employer": {
+        "name": "Northwind Logistics",
+        "registration_number": "NW-LOG-2018",
+        "address": {
+            "line1": "200 Freight Avenue",
+            "city": "Chicago",
+            "state": "IL",
+            "postal_code": "60606",
+            "country": "US"
+        }
+    },
+    "earnings": {
+        "base_salary": 7500.0,
+        "overtime_pay": 120.0,
+        "bonus": 180.0,
+        "other_earnings": 0.0,
+        "gross_pay": 7800.0
+    },
+    "deductions": {
+        "tax": 1650.0,
+        "social_security": 420.0,
+        "health_insurance": 260.0,
+        "retirement_contribution": 350.0,
+        "other_deductions": 0.0,
+        "total_deductions": 2680.0
+    },
+    "net_pay": 5120.0,
+    "currency": "USD",
+    "payment_method": "BANK_TRANSFER",
+    "payment_account_last4": "5523",
+    "raw_ocr_confidence": 0.96,
+    "source_file_name": "payslip_nov_2025_priya.pdf"
+}
+

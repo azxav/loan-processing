@@ -1,0 +1,127 @@
+{
+    "document_type": "BANK_STATEMENT",
+    "account": {
+        "bank_name": "Silver State Bank",
+        "account_holder_name": "Jordan Miller",
+        "account_number_masked": "*****7711",
+        "iban": null,
+        "currency": "USD"
+    },
+    "statement_period": {
+        "start_date": "2025-09-01",
+        "end_date": "2025-11-30"
+    },
+    "opening_balance": 820.0,
+    "closing_balance": 610.4,
+    "transactions": [
+        {
+            "transaction_id": "TX-2025-09-01-020",
+            "date": "2025-09-01",
+            "description": "Streaming Revenue - Twitch",
+            "category": "INCOME_SELF_EMPLOYMENT",
+            "amount": 3100.0,
+            "direction": "CREDIT",
+            "running_balance": 3920.0
+        },
+        {
+            "transaction_id": "TX-2025-09-04-021",
+            "date": "2025-09-04",
+            "description": "Online Betting Platform",
+            "category": "HIGH_RISK_GAMBLING",
+            "amount": -850.0,
+            "direction": "DEBIT",
+            "running_balance": 3070.0
+        },
+        {
+            "transaction_id": "TX-2025-09-12-022",
+            "date": "2025-09-12",
+            "description": "Credit Card Payment",
+            "category": "DEBT_CREDIT_CARD_PAYMENT",
+            "amount": -680.0,
+            "direction": "DEBIT",
+            "running_balance": 2390.0
+        },
+        {
+            "transaction_id": "TX-2025-09-20-023",
+            "date": "2025-09-20",
+            "description": "Rent - Oakridge Court",
+            "category": "HOUSING_RENT",
+            "amount": -1900.0,
+            "direction": "DEBIT",
+            "running_balance": 490.0
+        },
+        {
+            "transaction_id": "TX-2025-10-01-024",
+            "date": "2025-10-01",
+            "description": "Streaming Revenue - Twitch",
+            "category": "INCOME_SELF_EMPLOYMENT",
+            "amount": 3200.0,
+            "direction": "CREDIT",
+            "running_balance": 3690.0
+        },
+        {
+            "transaction_id": "TX-2025-10-06-025",
+            "date": "2025-10-06",
+            "description": "Overdraft Fee",
+            "category": "FEE_OVERDRAFT",
+            "amount": -35.0,
+            "direction": "DEBIT",
+            "running_balance": 3655.0
+        },
+        {
+            "transaction_id": "TX-2025-10-09-026",
+            "date": "2025-10-09",
+            "description": "Casino Transfer",
+            "category": "HIGH_RISK_GAMBLING",
+            "amount": -1200.0,
+            "direction": "DEBIT",
+            "running_balance": 2455.0
+        },
+        {
+            "transaction_id": "TX-2025-10-20-027",
+            "date": "2025-10-20",
+            "description": "Rent - Oakridge Court",
+            "category": "HOUSING_RENT",
+            "amount": -1900.0,
+            "direction": "DEBIT",
+            "running_balance": 555.0
+        },
+        {
+            "transaction_id": "TX-2025-11-01-028",
+            "date": "2025-11-01",
+            "description": "Streaming Revenue - Twitch",
+            "category": "INCOME_SELF_EMPLOYMENT",
+            "amount": 3300.0,
+            "direction": "CREDIT",
+            "running_balance": 3855.0
+        },
+        {
+            "transaction_id": "TX-2025-11-05-029",
+            "date": "2025-11-05",
+            "description": "Online Betting Platform",
+            "category": "HIGH_RISK_GAMBLING",
+            "amount": -900.0,
+            "direction": "DEBIT",
+            "running_balance": 2955.0
+        },
+        {
+            "transaction_id": "TX-2025-11-12-030",
+            "date": "2025-11-12",
+            "description": "Credit Card Payment",
+            "category": "DEBT_CREDIT_CARD_PAYMENT",
+            "amount": -650.0,
+            "direction": "DEBIT",
+            "running_balance": 2305.0
+        },
+        {
+            "transaction_id": "TX-2025-11-20-031",
+            "date": "2025-11-20",
+            "description": "Rent - Oakridge Court",
+            "category": "HOUSING_RENT",
+            "amount": -1900.0,
+            "direction": "DEBIT",
+            "running_balance": 405.0
+        }
+    ]
+}
+

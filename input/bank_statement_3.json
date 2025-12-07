@@ -1,0 +1,172 @@
+{
+    "document_type": "BANK_STATEMENT",
+    "account": {
+        "bank_name": "Great Lakes Bank",
+        "account_holder_name": "Priya Desai",
+        "account_number_masked": "*****5523",
+        "iban": null,
+        "currency": "USD"
+    },
+    "statement_period": {
+        "start_date": "2025-09-01",
+        "end_date": "2025-11-30"
+    },
+    "opening_balance": 4200.0,
+    "closing_balance": 3650.0,
+    "transactions": [
+        {
+            "transaction_id": "TX-2025-09-01-101",
+            "date": "2025-09-01",
+            "description": "Payroll - Northwind Logistics",
+            "category": "INCOME_SALARY",
+            "amount": 7800.0,
+            "direction": "CREDIT",
+            "running_balance": 12000.0
+        },
+        {
+            "transaction_id": "TX-2025-09-03-102",
+            "date": "2025-09-03",
+            "description": "Mortgage Payment",
+            "category": "HOUSING_MORTGAGE",
+            "amount": -2500.0,
+            "direction": "DEBIT",
+            "running_balance": 9500.0
+        },
+        {
+            "transaction_id": "TX-2025-09-05-103",
+            "date": "2025-09-05",
+            "description": "Home Equity Payment - HE-2022-0042",
+            "category": "DEBT_LOAN_PAYMENT",
+            "amount": -420.0,
+            "direction": "DEBIT",
+            "running_balance": 9080.0
+        },
+        {
+            "transaction_id": "TX-2025-09-10-104",
+            "date": "2025-09-10",
+            "description": "Credit Card Payment",
+            "category": "DEBT_CREDIT_CARD_PAYMENT",
+            "amount": -620.0,
+            "direction": "DEBIT",
+            "running_balance": 8460.0
+        },
+        {
+            "transaction_id": "TX-2025-09-20-105",
+            "date": "2025-09-20",
+            "description": "Childcare Services",
+            "category": "LIVING_EXPENSES",
+            "amount": -680.0,
+            "direction": "DEBIT",
+            "running_balance": 7780.0
+        },
+        {
+            "transaction_id": "TX-2025-10-01-106",
+            "date": "2025-10-01",
+            "description": "Payroll - Northwind Logistics",
+            "category": "INCOME_SALARY",
+            "amount": 7800.0,
+            "direction": "CREDIT",
+            "running_balance": 15580.0
+        },
+        {
+            "transaction_id": "TX-2025-10-03-107",
+            "date": "2025-10-03",
+            "description": "Mortgage Payment",
+            "category": "HOUSING_MORTGAGE",
+            "amount": -2500.0,
+            "direction": "DEBIT",
+            "running_balance": 13080.0
+        },
+        {
+            "transaction_id": "TX-2025-10-05-108",
+            "date": "2025-10-05",
+            "description": "Home Equity Payment - HE-2022-0042",
+            "category": "DEBT_LOAN_PAYMENT",
+            "amount": -420.0,
+            "direction": "DEBIT",
+            "running_balance": 12660.0
+        },
+        {
+            "transaction_id": "TX-2025-10-12-109",
+            "date": "2025-10-12",
+            "description": "Medical Expenses",
+            "category": "LIVING_EXPENSES",
+            "amount": -860.0,
+            "direction": "DEBIT",
+            "running_balance": 11800.0
+        },
+        {
+            "transaction_id": "TX-2025-10-20-110",
+            "date": "2025-10-20",
+            "description": "Grocery Store",
+            "category": "LIVING_EXPENSES",
+            "amount": -320.0,
+            "direction": "DEBIT",
+            "running_balance": 11480.0
+        },
+        {
+            "transaction_id": "TX-2025-11-01-111",
+            "date": "2025-11-01",
+            "description": "Payroll - Northwind Logistics",
+            "category": "INCOME_SALARY",
+            "amount": 7800.0,
+            "direction": "CREDIT",
+            "running_balance": 19280.0
+        },
+        {
+            "transaction_id": "TX-2025-11-03-112",
+            "date": "2025-11-03",
+            "description": "Mortgage Payment",
+            "category": "HOUSING_MORTGAGE",
+            "amount": -2500.0,
+            "direction": "DEBIT",
+            "running_balance": 16780.0
+        },
+        {
+            "transaction_id": "TX-2025-11-05-113",
+            "date": "2025-11-05",
+            "description": "Home Equity Payment - HE-2022-0042",
+            "category": "DEBT_LOAN_PAYMENT",
+            "amount": -420.0,
+            "direction": "DEBIT",
+            "running_balance": 16360.0
+        },
+        {
+            "transaction_id": "TX-2025-11-14-114",
+            "date": "2025-11-14",
+            "description": "Car Lease",
+            "category": "DEBT_LOAN_PAYMENT",
+            "amount": -520.0,
+            "direction": "DEBIT",
+            "running_balance": 15840.0
+        },
+        {
+            "transaction_id": "TX-2025-11-20-115",
+            "date": "2025-11-20",
+            "description": "School Tuition",
+            "category": "LIVING_EXPENSES",
+            "amount": -2600.0,
+            "direction": "DEBIT",
+            "running_balance": 13240.0
+        },
+        {
+            "transaction_id": "TX-2025-11-28-116",
+            "date": "2025-11-28",
+            "description": "Credit Card Payment",
+            "category": "DEBT_CREDIT_CARD_PAYMENT",
+            "amount": -820.0,
+            "direction": "DEBIT",
+            "running_balance": 12420.0
+        },
+        {
+            "transaction_id": "TX-2025-11-30-117",
+            "date": "2025-11-30",
+            "description": "Home Repair Contractor",
+            "category": "LIVING_EXPENSES",
+            "amount": -8770.0,
+            "direction": "DEBIT",
+            "running_balance": 3650.0
+        }
+    ]
+}
+

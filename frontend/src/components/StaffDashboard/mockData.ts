@@ -116,23 +116,114 @@ export const initialEdges: Edge[] = [
 ];
 
 export const nodeDetails: Record<string, any> = {
-    'read-docs': {
-        description: 'Extracting data from complex docs using Intelligent Document Processing (IDP).',
+    'doc-processing': {
+        description: 'Extracting data from ID, payslip, and bank statement using IDP.',
         details: [
-            { key: 'Documents Processed', value: '3' },
-            { key: 'Confidence Score', value: '98%' },
-            { key: 'Extraction Time', value: '1.2s' },
+            { key: 'Documents', value: 'ID + Payslip + Bank Statement' },
+            { key: 'OCR Confidence', value: '97%' },
+            { key: 'Entities', value: 'Name, DOB, Income, Transactions' },
         ],
-        logs: ['Received PDF', 'OCR Completed', 'Entities Extracted'],
+        logs: ['Files received', 'OCR completed', 'Entities structured'],
     },
-    'eligibility': {
-        description: 'Reasoning policy information against data.',
+    'doc-verification': {
+        description: 'Validate completeness, consistency, and fraud patterns across documents.',
         details: [
-            { key: 'Policy Version', value: 'v2.4' },
-            { key: 'Credit Score', value: '750' },
-            { key: 'DTI Ratio', value: '24%' },
+            { key: 'Cross-checks', value: 'Address, DOB, Employer' },
+            { key: 'Fraud Signals', value: 'None detected' },
         ],
-        logs: ['Fetching Policy Rules', 'Comparing Parameters', 'Decision: PROCEED'],
+        logs: ['Cross-check started', 'No tampering detected'],
     },
-    // Add defaults for others
+    'credit-scoring': {
+        description: 'Calculating credit score using bureau-like features and payment history.',
+        details: [
+            { key: 'Model', value: 'Gradient Boosted Trees' },
+            { key: 'Features', value: '36' },
+        ],
+        logs: ['Feature engineering complete', 'Score persisted'],
+    },
+    'income-analysis': {
+        description: 'Cash-flow analysis on bank statements to extract net income.',
+        details: [
+            { key: 'Avg Net Monthly', value: '$4.8k' },
+            { key: 'Income Stability', value: 'Medium' },
+        ],
+        logs: ['Detected salary cadence', 'Variance within limits'],
+    },
+    'debt-assessment': {
+        description: 'Debt-to-income (DTI) and leverage calculation.',
+        details: [
+            { key: 'DTI', value: '35%' },
+            { key: 'Obligations', value: 'Rent, loans, cards' },
+        ],
+        logs: ['DTI computed', 'Exposure within policy band'],
+    },
+    'compliance-check': {
+        description: 'KYC/AML verifications and watchlist screening.',
+        details: [
+            { key: 'KYC', value: 'Verified' },
+            { key: 'Watchlist', value: 'Clear' },
+        ],
+        logs: ['Document match confirmed', 'Screening passed'],
+    },
+    'report-generation': {
+        description: 'Compile findings into a decision packet for routing.',
+        details: [
+            { key: 'Sections', value: 'Identity, Income, Risk, Compliance' },
+            { key: 'Confidence', value: 'High' },
+        ],
+        logs: ['Aggregated signals', 'Drafted decision packet'],
+    },
+    'routing-decision': {
+        description: 'Decide the routing path based on thresholds and rules.',
+        details: [
+            { key: 'Ruleset', value: 'v2.4' },
+            { key: 'Overrides', value: 'None' },
+        ],
+        logs: ['Rules evaluated', 'Path selected'],
+    },
+    'auto-approve': {
+        description: 'Meets auto-approval thresholds (score, DTI, clean history).',
+        details: [
+            { key: 'Decision', value: 'Auto-Approve' },
+            { key: 'Score', value: '≥ 750' },
+        ],
+        logs: ['Auto-approve criteria met'],
+    },
+    'manual-review': {
+        description: 'Underwriter reviews borderline attributes and provides decision.',
+        details: [
+            { key: 'Reviewer SLA', value: '< 5 min (simulated)' },
+            { key: 'Required Docs', value: 'Existing set' },
+        ],
+        logs: ['Assigned to underwriter'],
+    },
+    'auto-reject': {
+        description: 'High-risk signals triggered automated rejection.',
+        details: [
+            { key: 'Risk Reason', value: 'High gambling + low score' },
+        ],
+        logs: ['Auto-reject executed'],
+    },
+    'update-banking': {
+        description: 'Push approved terms to LOS/core banking.',
+        details: [
+            { key: 'System', value: 'LOS + Core' },
+        ],
+        logs: ['Core update queued'],
+    },
+    'disburse': {
+        description: 'Generate contract and disburse funds.',
+        details: [
+            { key: 'Method', value: 'ACH' },
+        ],
+        logs: ['Contract generated', 'Funds scheduled'],
+    },
+    'notify': {
+        description: 'Notify applicant of the final outcome.',
+        details: [
+            { key: 'Channels', value: 'Email + SMS' },
+        ],
+        logs: ['Notification sent'],
+    },
+    // Fallbacks handled in component
 };

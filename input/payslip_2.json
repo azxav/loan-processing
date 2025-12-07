@@ -1,0 +1,52 @@
+{
+    "document_type": "PAYSLIP",
+    "pay_period_start": "2025-11-01",
+    "pay_period_end": "2025-11-30",
+    "pay_date": "2025-11-30",
+    "employee": {
+        "employee_id": "JM-7788",
+        "full_name": "Jordan Miller",
+        "national_id_number": "ID-246810121",
+        "address": {
+            "line1": "45 Oakridge Court",
+            "line2": "Unit 9",
+            "city": "Reno",
+            "state": "NV",
+            "postal_code": "89502",
+            "country": "US"
+        }
+    },
+    "employer": {
+        "name": "Miller Gaming Streams LLC",
+        "registration_number": "MGS-2023-01",
+        "address": {
+            "line1": "90 Arcade Plaza",
+            "city": "Reno",
+            "state": "NV",
+            "postal_code": "89501",
+            "country": "US"
+        }
+    },
+    "earnings": {
+        "base_salary": 3800.0,
+        "overtime_pay": 0.0,
+        "bonus": 650.0,
+        "other_earnings": 750.0,
+        "gross_pay": 5200.0
+    },
+    "deductions": {
+        "tax": 1040.0,
+        "social_security": 320.0,
+        "health_insurance": 160.0,
+        "retirement_contribution": 80.0,
+        "other_deductions": 0.0,
+        "total_deductions": 1600.0
+    },
+    "net_pay": 3600.0,
+    "currency": "USD",
+    "payment_method": "BANK_TRANSFER",
+    "payment_account_last4": "7711",
+    "raw_ocr_confidence": 0.94,
+    "source_file_name": "payslip_nov_2025_jordan.pdf"
+}
+

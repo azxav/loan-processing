@@ -1,0 +1,52 @@
+{
+    "document_type": "PAYSLIP",
+    "pay_period_start": "2025-11-01",
+    "pay_period_end": "2025-11-30",
+    "pay_date": "2025-11-30",
+    "employee": {
+        "employee_id": "ES-4410",
+        "full_name": "Elena Santiago",
+        "national_id_number": "ID-864202468",
+        "address": {
+            "line1": "18 Seaview Terrace",
+            "line2": "",
+            "city": "San Diego",
+            "state": "CA",
+            "postal_code": "92130",
+            "country": "US"
+        }
+    },
+    "employer": {
+        "name": "SolarBright Energy",
+        "registration_number": "SBE-2015-10",
+        "address": {
+            "line1": "800 Sunridge Blvd",
+            "city": "San Diego",
+            "state": "CA",
+            "postal_code": "92121",
+            "country": "US"
+        }
+    },
+    "earnings": {
+        "base_salary": 10000.0,
+        "overtime_pay": 0.0,
+        "bonus": 300.0,
+        "other_earnings": 200.0,
+        "gross_pay": 10500.0
+    },
+    "deductions": {
+        "tax": 2100.0,
+        "social_security": 650.0,
+        "health_insurance": 240.0,
+        "retirement_contribution": 410.0,
+        "other_deductions": 0.0,
+        "total_deductions": 3400.0
+    },
+    "net_pay": 7100.0,
+    "currency": "USD",
+    "payment_method": "BANK_TRANSFER",
+    "payment_account_last4": "9088",
+    "raw_ocr_confidence": 0.98,
+    "source_file_name": "payslip_nov_2025_elena.pdf"
+}
+

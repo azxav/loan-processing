@@ -1,0 +1,51 @@
+{
+    "application_id": "APP-2025-0002",
+    "application_date": "2025-12-04",
+    "product_type": "PERSONAL_LOAN",
+    "requested_amount": 18000.0,
+    "requested_term_months": 48,
+    "purpose_of_loan": "Small business capital",
+    "channel": "WEB_PORTAL",
+    "applicant": {
+        "customer_id": "CUST-100002",
+        "first_name": "Jordan",
+        "last_name": "Miller",
+        "full_name": "Jordan Miller",
+        "date_of_birth": "1987-08-12",
+        "national_id_number": "ID-246810121",
+        "email": "jordan.miller@example.com",
+        "phone_mobile": "+1-555-555-2211"
+    },
+    "residential_address": {
+        "line1": "45 Oakridge Court",
+        "line2": "Unit 9",
+        "city": "Reno",
+        "state": "NV",
+        "postal_code": "89502",
+        "country": "US",
+        "years_at_address": 1.2
+    },
+    "employment_details": {
+        "status": "SELF_EMPLOYED",
+        "employer_name": "Miller Gaming Streams LLC",
+        "job_title": "Content Creator",
+        "employment_start_date": "2023-02-01",
+        "stated_gross_monthly_income": 5200.0,
+        "stated_net_monthly_income": 3600.0,
+        "pay_frequency": "MONTHLY"
+    },
+    "financial_profile": {
+        "monthly_rent_or_mortgage": 1900.0,
+        "other_monthly_debt_payments": 900.0,
+        "total_credit_cards": 5,
+        "has_existing_loans_with_bank": false,
+        "existing_loan_accounts": []
+    },
+    "consents": {
+        "agree_terms_and_conditions": true,
+        "agree_credit_bureau_check": true,
+        "agree_data_processing": true,
+        "timestamp_utc": "2025-12-04T09:15:00Z"
+    }
+}
+

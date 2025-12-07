@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useEffect, useState } from 'react';
-import { Box, Typography, Chip } from '@mui/material';
+import { Box, Typography, Chip, Stack, Tooltip, Stepper, Step, StepLabel, Divider } from '@mui/material';
 import {
     ReactFlow,
     Background,
@@ -15,12 +15,50 @@ import {
     MarkerType,
     Handle,
     Position,
+    useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { type SimulationStatusMap } from './simulation';
 
 interface ProcessGraphProps {
     onNodeClick: (node: Node) => void;
+    statuses: SimulationStatusMap;
+    activeStep?: string;
 }
+
+type Phase = 'Intake' | 'Verification' | 'Risk' | 'Decision' | 'Funding';
+
+type NodeMeta = {
+    phase: Phase;
+    owner: string;
+    sla: string;
+    description: string;
+};
+
+const nodeMeta: Record<string, NodeMeta> = {
+    start: { phase: 'Intake', owner: 'System', sla: '< 5s', description: 'Process initiated' },
+    'doc-processing': { phase: 'Intake', owner: 'IDP Bot', sla: '2m', description: 'Extracting documents' },
+    'doc-verification': { phase: 'Intake', owner: 'Ops Analyst', sla: '3m', description: 'Cross-checking signals' },
+    'doc-check': { phase: 'Verification', owner: 'Decision Engine', sla: '30s', description: 'Risk gating' },
+    'reject-high-risk': { phase: 'Verification', owner: 'Risk Ops', sla: '1m', description: 'Reject if high risk' },
+    'credit-scoring': { phase: 'Risk', owner: 'Risk Engine', sla: '2m', description: 'Score calculation' },
+    'parallel-split': { phase: 'Risk', owner: 'Decision Engine', sla: '30s', description: 'Parallel branch setup' },
+    'income-analysis': { phase: 'Risk', owner: 'Data Analyst', sla: '2m', description: 'Cash flow review' },
+    'debt-assessment': { phase: 'Risk', owner: 'Risk Analyst', sla: '2m', description: 'DTI calculation' },
+    'compliance-check': { phase: 'Risk', owner: 'Compliance', sla: '2m', description: 'KYC/AML' },
+    'report-generation': { phase: 'Decision', owner: 'Ops Analyst', sla: '2m', description: 'Decision packet' },
+    'routing-decision': { phase: 'Decision', owner: 'Decision Engine', sla: '1m', description: 'Routing rule' },
+    'auto-approve': { phase: 'Decision', owner: 'Decision Engine', sla: '1m', description: 'Auto approval' },
+    'manual-review': { phase: 'Decision', owner: 'Underwriter', sla: '5m', description: 'Underwriter review' },
+    'auto-reject': { phase: 'Decision', owner: 'Decision Engine', sla: '1m', description: 'Auto reject' },
+    'final-decision': { phase: 'Decision', owner: 'Ops Lead', sla: '1m', description: 'Finalize decision' },
+    'update-banking': { phase: 'Funding', owner: 'Core Banking', sla: '2m', description: 'Push to core' },
+    'disburse': { phase: 'Funding', owner: 'Treasury', sla: '2m', description: 'Disbursement' },
+    'notify': { phase: 'Funding', owner: 'Comms', sla: '1m', description: 'Notify applicant' },
+    end: { phase: 'Funding', owner: 'System', sla: '< 5s', description: 'Process completed' },
+};
+
+const phaseOrder: Phase[] = ['Intake', 'Verification', 'Risk', 'Decision', 'Funding'];
 
 // Custom Node Components
 const ProcessNode = ({ data, selected }: { data: any; selected: boolean }) => {
@@ -45,8 +83,9 @@ const ProcessNode = ({ data, selected }: { data: any; selected: boolean }) => {
 
     const statusColors = getStatusColor(data.status);
     const typeColors = getTypeColor(data.type);
+    const dimmed = data.dimmed;
 
-    return (
+    const content = (
         <Box
             sx={{
                 minWidth: '160px',
@@ -60,6 +99,8 @@ const ProcessNode = ({ data, selected }: { data: any; selected: boolean }) => {
                 transition: 'all 0.2s',
                 cursor: 'pointer',
                 position: 'relative',
+                opacity: dimmed ? 0.35 : 1,
+                filter: dimmed ? 'grayscale(0.3)' : 'none',
                 '&:hover': {
                     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                     transform: 'translateY(-2px)',
@@ -91,10 +132,27 @@ const ProcessNode = ({ data, selected }: { data: any; selected: boolean }) => {
             <Handle type="source" position={Position.Bottom} />
         </Box>
     );
+
+    return (
+        <Tooltip
+            arrow
+            placement="top"
+            title={
+                <Box>
+                    <Typography variant="body2" fontWeight={700}>{data.label}</Typography>
+                    <Typography variant="caption">Owner: {data.meta?.owner ?? '—'}</Typography><br />
+                    <Typography variant="caption">SLA: {data.meta?.sla ?? '—'}</Typography><br />
+                    <Typography variant="caption">Status: {data.status ?? 'pending'}</Typography>
+                </Box>
+            }
+        >
+            {content}
+        </Tooltip>
+    );
 };
 
 const GatewayNode = ({ data, selected }: { data: any; selected: boolean }) => {
-    return (
+    const content = (
         <Box
             sx={{
                 width: '80px',
@@ -131,11 +189,28 @@ const GatewayNode = ({ data, selected }: { data: any; selected: boolean }) => {
             </Typography>
         </Box>
     );
+
+    return (
+        <Tooltip
+            arrow
+            placement="top"
+            title={
+                <Box>
+                    <Typography variant="body2" fontWeight={700}>{data.label}</Typography>
+                    <Typography variant="caption">Owner: {data.meta?.owner ?? '—'}</Typography><br />
+                    <Typography variant="caption">SLA: {data.meta?.sla ?? '—'}</Typography><br />
+                    <Typography variant="caption">Status: {data.status ?? 'pending'}</Typography>
+                </Box>
+            }
+        >
+            {content}
+        </Tooltip>
+    );
 };
 
 const StartEndNode = ({ data, selected }: { data: any; selected: boolean }) => {
     const isEnd = data.isEnd;
-    return (
+    const content = (
         <Box
             sx={{
                 width: isEnd ? '50px' : '60px',
@@ -162,6 +237,23 @@ const StartEndNode = ({ data, selected }: { data: any; selected: boolean }) => {
             </Typography>
         </Box>
     );
+
+    return (
+        <Tooltip
+            arrow
+            placement="top"
+            title={
+                <Box>
+                    <Typography variant="body2" fontWeight={700}>{data.label ?? (isEnd ? 'End' : 'Start')}</Typography>
+                    <Typography variant="caption">Owner: {data.meta?.owner ?? '—'}</Typography><br />
+                    <Typography variant="caption">SLA: {data.meta?.sla ?? '—'}</Typography><br />
+                    <Typography variant="caption">Status: {data.status ?? 'pending'}</Typography>
+                </Box>
+            }
+        >
+            {content}
+        </Tooltip>
+    );
 };
 
 const nodeTypes: NodeTypes = {
@@ -171,8 +263,10 @@ const nodeTypes: NodeTypes = {
 };
 
 
-const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
+const ProcessGraph = ({ onNodeClick, statuses, activeStep }: ProcessGraphProps) => {
     const [isMounted, setIsMounted] = useState(false);
+    const [pathHistory, setPathHistory] = useState<string[]>([]);
+    const reactFlowInstance = useReactFlow();
 
     useEffect(() => {
         setIsMounted(true);
@@ -183,7 +277,7 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
         {
             id: 'start',
             type: 'startend',
-            data: { label: 'START', isEnd: false },
+            data: { label: 'START', isEnd: false, status: 'completed', meta: nodeMeta.start, phase: nodeMeta.start.phase },
             position: { x: 50, y: 200 },
         },
         {
@@ -192,8 +286,10 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
             data: {
                 label: 'Document Processing',
                 subtitle: 'OCR, Extraction, Classification',
-                status: 'completed',
+                status: 'pending',
                 type: 'ROBOT',
+                meta: nodeMeta['doc-processing'],
+                phase: nodeMeta['doc-processing'].phase,
             },
             position: { x: 200, y: 200 },
         },
@@ -203,15 +299,17 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
             data: {
                 label: 'Document Verification',
                 subtitle: 'Completeness, Consistency, Fraud',
-                status: 'completed',
+                status: 'pending',
                 type: 'AGENT',
+                meta: nodeMeta['doc-verification'],
+                phase: nodeMeta['doc-verification'].phase,
             },
             position: { x: 400, y: 200 },
         },
         {
             id: 'doc-check',
             type: 'gateway',
-            data: { label: 'Risk\nCheck' },
+            data: { label: 'Risk\nCheck', meta: nodeMeta['doc-check'], phase: nodeMeta['doc-check'].phase },
             position: { x: 600, y: 190 },
         },
         {
@@ -222,6 +320,8 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
                 subtitle: 'High Risk Detected',
                 status: 'pending',
                 type: 'API',
+                meta: nodeMeta['reject-high-risk'],
+                phase: nodeMeta['reject-high-risk'].phase,
             },
             position: { x: 400, y: 320 },
         },
@@ -231,15 +331,17 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
             data: {
                 label: 'Credit Scoring',
                 subtitle: 'ML Model (XGBoost)',
-                status: 'completed',
+                status: 'pending',
                 type: 'ROBOT',
+                meta: nodeMeta['credit-scoring'],
+                phase: nodeMeta['credit-scoring'].phase,
             },
             position: { x: 800, y: 200 },
         },
         {
             id: 'parallel-split',
             type: 'gateway',
-            data: { label: 'Parallel\nAnalysis' },
+            data: { label: 'Parallel\nAnalysis', meta: nodeMeta['parallel-split'], phase: nodeMeta['parallel-split'].phase },
             position: { x: 1000, y: 190 },
         },
         {
@@ -248,8 +350,10 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
             data: {
                 label: 'Income Analysis',
                 subtitle: 'Bank Statement Analysis',
-                status: 'completed',
+                status: 'pending',
                 type: 'AGENT',
+                meta: nodeMeta['income-analysis'],
+                phase: nodeMeta['income-analysis'].phase,
             },
             position: { x: 1200, y: 100 },
         },
@@ -259,8 +363,10 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
             data: {
                 label: 'Debt Assessment',
                 subtitle: 'DTI Calculation',
-                status: 'completed',
+                status: 'pending',
                 type: 'AGENT',
+                meta: nodeMeta['debt-assessment'],
+                phase: nodeMeta['debt-assessment'].phase,
             },
             position: { x: 1200, y: 200 },
         },
@@ -270,8 +376,10 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
             data: {
                 label: 'Compliance Check',
                 subtitle: 'KYC/AML Verification',
-                status: 'completed',
+                status: 'pending',
                 type: 'AGENT',
+                meta: nodeMeta['compliance-check'],
+                phase: nodeMeta['compliance-check'].phase,
             },
             position: { x: 1200, y: 300 },
         },
@@ -281,15 +389,17 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
             data: {
                 label: 'Report Generation',
                 subtitle: 'Synthesize Findings',
-                status: 'in-progress',
+                status: 'pending',
                 type: 'AGENT',
+                meta: nodeMeta['report-generation'],
+                phase: nodeMeta['report-generation'].phase,
             },
             position: { x: 1400, y: 200 },
         },
         {
             id: 'routing-decision',
             type: 'gateway',
-            data: { label: 'Routing\nDecision' },
+            data: { label: 'Routing\nDecision', meta: nodeMeta['routing-decision'], phase: nodeMeta['routing-decision'].phase },
             position: { x: 1600, y: 190 },
         },
         {
@@ -300,6 +410,8 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
                 subtitle: 'Score ≥750, Low Risk',
                 status: 'pending',
                 type: 'ROBOT',
+                meta: nodeMeta['auto-approve'],
+                phase: nodeMeta['auto-approve'].phase,
             },
             position: { x: 1800, y: 100 },
         },
@@ -311,6 +423,8 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
                 subtitle: 'Underwriter Decision',
                 status: 'pending',
                 type: 'HUMAN',
+                meta: nodeMeta['manual-review'],
+                phase: nodeMeta['manual-review'].phase,
             },
             position: { x: 1800, y: 200 },
         },
@@ -322,13 +436,15 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
                 subtitle: 'Score <600 or Compliance Fail',
                 status: 'pending',
                 type: 'ROBOT',
+                meta: nodeMeta['auto-reject'],
+                phase: nodeMeta['auto-reject'].phase,
             },
             position: { x: 1800, y: 300 },
         },
         {
             id: 'final-decision',
             type: 'gateway',
-            data: { label: 'Final\nDecision' },
+            data: { label: 'Final\nDecision', meta: nodeMeta['final-decision'], phase: nodeMeta['final-decision'].phase },
             position: { x: 2000, y: 190 },
         },
         {
@@ -339,6 +455,8 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
                 subtitle: 'Temenos/Finacle',
                 status: 'pending',
                 type: 'API',
+                meta: nodeMeta['update-banking'],
+                phase: nodeMeta['update-banking'].phase,
             },
             position: { x: 2200, y: 200 },
         },
@@ -350,6 +468,8 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
                 subtitle: 'Final Loan Processing',
                 status: 'pending',
                 type: 'ROBOT',
+                meta: nodeMeta.disburse,
+                phase: nodeMeta.disburse.phase,
             },
             position: { x: 2400, y: 200 },
         },
@@ -361,13 +481,15 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
                 subtitle: 'Email/SMS/Push',
                 status: 'pending',
                 type: 'API',
+                meta: nodeMeta.notify,
+                phase: nodeMeta.notify.phase,
             },
             position: { x: 2200, y: 320 },
         },
         {
             id: 'end',
             type: 'startend',
-            data: { label: 'END', isEnd: true },
+            data: { label: 'END', isEnd: true, meta: nodeMeta.end, phase: nodeMeta.end.phase },
             position: { x: 2600, y: 205 },
         },
     ], []);
@@ -443,7 +565,7 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
         { id: 'e18', source: 'notify', target: 'end', type: 'smoothstep' },
     ], []);
 
-    const [nodes, , onNodesChange] = useNodesState(initialNodes);
+    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
     const onNodeClickHandler = useCallback((_event: React.MouseEvent, node: Node) => {
@@ -453,6 +575,52 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
     const onConnect = useCallback((params: Connection) => {
         setEdges((eds) => addEdge(params, eds));
     }, [setEdges]);
+
+    useEffect(() => {
+        setNodes((nds) => nds.map((n) => {
+            const status = statuses[n.id] ?? n.data.status;
+            const isActive = activeStep === n.id;
+            const inHistory = pathHistory.includes(n.id);
+            const dimmed = activeStep ? (!isActive && !inHistory) : false;
+            return {
+                ...n,
+                data: {
+                    ...n.data,
+                    status,
+                    dimmed,
+                },
+            };
+        }));
+    }, [statuses, setNodes, activeStep, pathHistory]);
+
+    useEffect(() => {
+        if (activeStep) {
+            setPathHistory((prev) => prev.includes(activeStep) ? prev : [...prev, activeStep]);
+        }
+    }, [activeStep]);
+
+    useEffect(() => {
+        if (!activeStep) return;
+        const node = nodes.find((n) => n.id === activeStep);
+        if (node) {
+            reactFlowInstance.fitView({ nodes: [node], padding: 0.6, duration: 600 });
+        }
+    }, [activeStep, nodes, reactFlowInstance]);
+
+    const currentPhase = useMemo<Phase>(() => {
+        if (!activeStep) return 'Intake';
+        return nodeMeta[activeStep]?.phase ?? 'Intake';
+    }, [activeStep]);
+
+    const currentPhaseIndex = phaseOrder.indexOf(currentPhase);
+
+    const historyLabels = useMemo(() => {
+        const labelMap: Record<string, string> = {};
+        initialNodes.forEach((node) => {
+            labelMap[node.id] = (node.data as any)?.label ?? node.id;
+        });
+        return labelMap;
+    }, [initialNodes]);
 
     if (!isMounted) {
         return (
@@ -478,41 +646,94 @@ const ProcessGraph = ({ onNodeClick }: ProcessGraphProps) => {
                 height: '100%', 
                 position: 'relative',
                 minHeight: '500px',
+                display: 'flex',
+                flexDirection: 'column',
             }}
         >
-            <ReactFlow
-                key="workflow-diagram"
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                onNodeClick={onNodeClickHandler}
-                nodeTypes={nodeTypes}
-                fitView
-                fitViewOptions={{ padding: 0.2 }}
-                minZoom={0.2}
-                maxZoom={1.5}
-                defaultEdgeOptions={{
-                    type: 'smoothstep',
-                    animated: true,
-                    markerEnd: {
-                        type: MarkerType.ArrowClosed,
-                    },
-                }}
-                proOptions={{ hideAttribution: true }}
-            >
-                <Background color="#aaa" gap={16} />
-                <Controls />
-                <MiniMap
-                    nodeColor={(node) => {
-                        if (node.data?.status === 'completed') return '#4caf50';
-                        if (node.data?.status === 'in-progress') return '#ff9800';
-                        return '#999';
-                    }}
-                    maskColor="rgba(0, 0, 0, 0.1)"
-                />
-            </ReactFlow>
+            <Stack spacing={1.5} sx={{ mb: 1.5, position: 'relative', zIndex: 2 }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+                    <Typography variant="subtitle2" fontWeight={700}>
+                        Stage {currentPhaseIndex + 1} of {phaseOrder.length}: {currentPhase}
+                    </Typography>
+                    <Chip label={`Active: ${historyLabels[activeStep ?? ''] ?? 'None'}`} size="small" color="primary" />
+                </Stack>
+                <Stepper activeStep={currentPhaseIndex >= 0 ? currentPhaseIndex : 0} alternativeLabel>
+                    {phaseOrder.map((phase) => (
+                        <Step key={phase} completed={phaseOrder.indexOf(phase) < currentPhaseIndex}>
+                            <StepLabel>{phase}</StepLabel>
+                        </Step>
+                    ))}
+                </Stepper>
+                <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
+                    <Typography variant="caption" color="text.secondary">Path history:</Typography>
+                    {pathHistory.map((nodeId) => (
+                        <Chip key={nodeId} label={historyLabels[nodeId] ?? nodeId} size="small" variant="outlined" />
+                    ))}
+                </Stack>
+                <Divider />
+                <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                    <Chip label="Completed" size="small" sx={{ bgcolor: '#e8f5e9', borderColor: '#4caf50', border: '1px solid #4caf50' }} />
+                    <Chip label="In Progress" size="small" sx={{ bgcolor: '#fff3e0', borderColor: '#ff9800', border: '1px solid #ff9800' }} />
+                    <Chip label="Pending" size="small" variant="outlined" />
+                </Stack>
+            </Stack>
+            <Box sx={{ position: 'relative', zIndex: 1, flexGrow: 1, minHeight: 420 }}>
+                <Box sx={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: `repeat(${phaseOrder.length}, 1fr)`, pointerEvents: 'none', zIndex: 0, opacity: 0.12 }}>
+                    {phaseOrder.map((phase, idx) => (
+                        <Box
+                            key={phase}
+                            sx={{
+                                backgroundColor: idx % 2 === 0 ? '#e3f2fd' : '#f5f5f5',
+                                borderRight: idx === phaseOrder.length - 1 ? 'none' : '1px solid #ddd',
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                justifyContent: 'center',
+                                pt: 1,
+                                color: '#333',
+                                fontSize: 12,
+                                fontWeight: 700,
+                            }}
+                        >
+                            {phase}
+                        </Box>
+                    ))}
+                </Box>
+                <Box sx={{ position: 'relative', zIndex: 1, height: '100%' }}>
+                    <ReactFlow
+                        key="workflow-diagram"
+                        nodes={nodes}
+                        edges={edges}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                        onConnect={onConnect}
+                        onNodeClick={onNodeClickHandler}
+                        nodeTypes={nodeTypes}
+                        fitView
+                        fitViewOptions={{ padding: 0.2 }}
+                        minZoom={0.2}
+                        maxZoom={1.5}
+                        defaultEdgeOptions={{
+                            type: 'smoothstep',
+                            animated: true,
+                            markerEnd: {
+                                type: MarkerType.ArrowClosed,
+                            },
+                        }}
+                        proOptions={{ hideAttribution: true }}
+                    >
+                        <Background color="#ddd" gap={16} />
+                        <Controls />
+                        <MiniMap
+                            nodeColor={(node) => {
+                                if (node.data?.status === 'completed') return '#4caf50';
+                                if (node.data?.status === 'in-progress') return '#ff9800';
+                                return '#999';
+                            }}
+                            maskColor="rgba(0, 0, 0, 0.1)"
+                        />
+                    </ReactFlow>
+                </Box>
+            </Box>
         </Box>
     );
 };

@@ -1,0 +1,24 @@
+{
+    "document_type": "NATIONAL_ID",
+    "issuing_country": "US",
+    "id_number": "ID-135791113",
+    "full_name": "Priya Desai",
+    "first_name": "Priya",
+    "last_name": "Desai",
+    "date_of_birth": "1990-02-03",
+    "gender": "F",
+    "date_of_issue": "2020-11-22",
+    "date_of_expiry": "2030-11-21",
+    "address_on_id": {
+        "line1": "782 Lakeshore Drive",
+        "line2": "",
+        "city": "Chicago",
+        "state": "IL",
+        "postal_code": "60657",
+        "country": "US"
+    },
+    "mrz_data": null,
+    "raw_ocr_confidence": 0.97,
+    "source_file_name": "priya_desai_id_front.jpg"
+}
+

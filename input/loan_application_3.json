@@ -1,0 +1,58 @@
+{
+    "application_id": "APP-2025-0003",
+    "application_date": "2025-12-04",
+    "product_type": "PERSONAL_LOAN",
+    "requested_amount": 22000.0,
+    "requested_term_months": 60,
+    "purpose_of_loan": "Home renovation",
+    "channel": "MOBILE_APP",
+    "applicant": {
+        "customer_id": "CUST-100003",
+        "first_name": "Priya",
+        "last_name": "Desai",
+        "full_name": "Priya Desai",
+        "date_of_birth": "1990-02-03",
+        "national_id_number": "ID-135791113",
+        "email": "priya.desai@example.com",
+        "phone_mobile": "+1-555-555-3399"
+    },
+    "residential_address": {
+        "line1": "782 Lakeshore Drive",
+        "line2": "",
+        "city": "Chicago",
+        "state": "IL",
+        "postal_code": "60657",
+        "country": "US",
+        "years_at_address": 2.8
+    },
+    "employment_details": {
+        "status": "EMPLOYED_FULL_TIME",
+        "employer_name": "Northwind Logistics",
+        "job_title": "Operations Manager",
+        "employment_start_date": "2019-05-15",
+        "stated_gross_monthly_income": 7800.0,
+        "stated_net_monthly_income": 5400.0,
+        "pay_frequency": "MONTHLY"
+    },
+    "financial_profile": {
+        "monthly_rent_or_mortgage": 2500.0,
+        "other_monthly_debt_payments": 1400.0,
+        "total_credit_cards": 4,
+        "has_existing_loans_with_bank": true,
+        "existing_loan_accounts": [
+            {
+                "account_id": "HE-2022-0042",
+                "product_type": "HOME_EQUITY",
+                "outstanding_balance": 18000.0,
+                "monthly_payment": 420.0
+            }
+        ]
+    },
+    "consents": {
+        "agree_terms_and_conditions": true,
+        "agree_credit_bureau_check": true,
+        "agree_data_processing": true,
+        "timestamp_utc": "2025-12-04T10:05:00Z"
+    }
+}
+

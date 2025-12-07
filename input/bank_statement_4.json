@@ -1,0 +1,172 @@
+{
+    "document_type": "BANK_STATEMENT",
+    "account": {
+        "bank_name": "Pacific Trust Bank",
+        "account_holder_name": "Elena Santiago",
+        "account_number_masked": "*****9088",
+        "iban": null,
+        "currency": "USD"
+    },
+    "statement_period": {
+        "start_date": "2025-09-01",
+        "end_date": "2025-11-30"
+    },
+    "opening_balance": 15200.0,
+    "closing_balance": 18650.0,
+    "transactions": [
+        {
+            "transaction_id": "TX-2025-09-01-201",
+            "date": "2025-09-01",
+            "description": "Salary - SolarBright Energy",
+            "category": "INCOME_SALARY",
+            "amount": 10500.0,
+            "direction": "CREDIT",
+            "running_balance": 25700.0
+        },
+        {
+            "transaction_id": "TX-2025-09-04-202",
+            "date": "2025-09-04",
+            "description": "Mortgage Payment",
+            "category": "HOUSING_MORTGAGE",
+            "amount": -2100.0,
+            "direction": "DEBIT",
+            "running_balance": 23600.0
+        },
+        {
+            "transaction_id": "TX-2025-09-08-203",
+            "date": "2025-09-08",
+            "description": "Index Fund Investment",
+            "category": "SAVINGS_INVESTMENT",
+            "amount": -1500.0,
+            "direction": "DEBIT",
+            "running_balance": 22100.0
+        },
+        {
+            "transaction_id": "TX-2025-09-15-204",
+            "date": "2025-09-15",
+            "description": "Credit Card Payment",
+            "category": "DEBT_CREDIT_CARD_PAYMENT",
+            "amount": -450.0,
+            "direction": "DEBIT",
+            "running_balance": 21650.0
+        },
+        {
+            "transaction_id": "TX-2025-09-21-205",
+            "date": "2025-09-21",
+            "description": "Groceries",
+            "category": "LIVING_EXPENSES",
+            "amount": -320.0,
+            "direction": "DEBIT",
+            "running_balance": 21330.0
+        },
+        {
+            "transaction_id": "TX-2025-10-01-206",
+            "date": "2025-10-01",
+            "description": "Salary - SolarBright Energy",
+            "category": "INCOME_SALARY",
+            "amount": 10500.0,
+            "direction": "CREDIT",
+            "running_balance": 31830.0
+        },
+        {
+            "transaction_id": "TX-2025-10-04-207",
+            "date": "2025-10-04",
+            "description": "Mortgage Payment",
+            "category": "HOUSING_MORTGAGE",
+            "amount": -2100.0,
+            "direction": "DEBIT",
+            "running_balance": 29730.0
+        },
+        {
+            "transaction_id": "TX-2025-10-10-208",
+            "date": "2025-10-10",
+            "description": "Retirement Contribution",
+            "category": "SAVINGS_INVESTMENT",
+            "amount": -1200.0,
+            "direction": "DEBIT",
+            "running_balance": 28530.0
+        },
+        {
+            "transaction_id": "TX-2025-10-18-209",
+            "date": "2025-10-18",
+            "description": "Dining Out",
+            "category": "LIFESTYLE",
+            "amount": -180.0,
+            "direction": "DEBIT",
+            "running_balance": 28350.0
+        },
+        {
+            "transaction_id": "TX-2025-10-25-210",
+            "date": "2025-10-25",
+            "description": "Credit Card Payment",
+            "category": "DEBT_CREDIT_CARD_PAYMENT",
+            "amount": -420.0,
+            "direction": "DEBIT",
+            "running_balance": 27930.0
+        },
+        {
+            "transaction_id": "TX-2025-11-01-211",
+            "date": "2025-11-01",
+            "description": "Salary - SolarBright Energy",
+            "category": "INCOME_SALARY",
+            "amount": 10500.0,
+            "direction": "CREDIT",
+            "running_balance": 38430.0
+        },
+        {
+            "transaction_id": "TX-2025-11-04-212",
+            "date": "2025-11-04",
+            "description": "Mortgage Payment",
+            "category": "HOUSING_MORTGAGE",
+            "amount": -2100.0,
+            "direction": "DEBIT",
+            "running_balance": 36330.0
+        },
+        {
+            "transaction_id": "TX-2025-11-09-213",
+            "date": "2025-11-09",
+            "description": "Retirement Contribution",
+            "category": "SAVINGS_INVESTMENT",
+            "amount": -1200.0,
+            "direction": "DEBIT",
+            "running_balance": 35130.0
+        },
+        {
+            "transaction_id": "TX-2025-11-16-214",
+            "date": "2025-11-16",
+            "description": "Home Improvement Store",
+            "category": "LIVING_EXPENSES",
+            "amount": -780.0,
+            "direction": "DEBIT",
+            "running_balance": 34350.0
+        },
+        {
+            "transaction_id": "TX-2025-11-25-215",
+            "date": "2025-11-25",
+            "description": "Credit Card Payment",
+            "category": "DEBT_CREDIT_CARD_PAYMENT",
+            "amount": -420.0,
+            "direction": "DEBIT",
+            "running_balance": 33930.0
+        },
+        {
+            "transaction_id": "TX-2025-11-30-216",
+            "date": "2025-11-30",
+            "description": "Solar Rebate Deposit",
+            "category": "INCOME_OTHER",
+            "amount": 720.0,
+            "direction": "CREDIT",
+            "running_balance": 34650.0
+        },
+        {
+            "transaction_id": "TX-2025-11-30-217",
+            "date": "2025-11-30",
+            "description": "Investment Transfer",
+            "category": "SAVINGS_INVESTMENT",
+            "amount": -16000.0,
+            "direction": "DEBIT",
+            "running_balance": 18650.0
+        }
+    ]
+}
+

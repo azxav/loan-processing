@@ -1,0 +1,58 @@
+{
+    "application_id": "APP-2025-0004",
+    "application_date": "2025-12-04",
+    "product_type": "PERSONAL_LOAN",
+    "requested_amount": 12000.0,
+    "requested_term_months": 24,
+    "purpose_of_loan": "Home energy upgrades",
+    "channel": "WEB_PORTAL",
+    "applicant": {
+        "customer_id": "CUST-100004",
+        "first_name": "Elena",
+        "last_name": "Santiago",
+        "full_name": "Elena Santiago",
+        "date_of_birth": "1985-11-21",
+        "national_id_number": "ID-864202468",
+        "email": "elena.santiago@example.com",
+        "phone_mobile": "+1-555-555-7744"
+    },
+    "residential_address": {
+        "line1": "18 Seaview Terrace",
+        "line2": "",
+        "city": "San Diego",
+        "state": "CA",
+        "postal_code": "92130",
+        "country": "US",
+        "years_at_address": 6.0
+    },
+    "employment_details": {
+        "status": "EMPLOYED_FULL_TIME",
+        "employer_name": "SolarBright Energy",
+        "job_title": "Product Marketing Lead",
+        "employment_start_date": "2017-03-10",
+        "stated_gross_monthly_income": 10500.0,
+        "stated_net_monthly_income": 7800.0,
+        "pay_frequency": "MONTHLY"
+    },
+    "financial_profile": {
+        "monthly_rent_or_mortgage": 2100.0,
+        "other_monthly_debt_payments": 450.0,
+        "total_credit_cards": 2,
+        "has_existing_loans_with_bank": true,
+        "existing_loan_accounts": [
+            {
+                "account_id": "CC-2021-7788",
+                "product_type": "CREDIT_CARD",
+                "outstanding_balance": 1200.0,
+                "monthly_payment": 90.0
+            }
+        ]
+    },
+    "consents": {
+        "agree_terms_and_conditions": true,
+        "agree_credit_bureau_check": true,
+        "agree_data_processing": true,
+        "timestamp_utc": "2025-12-04T10:45:00Z"
+    }
+}
+

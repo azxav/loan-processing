@@ -1,0 +1,24 @@
+{
+    "document_type": "NATIONAL_ID",
+    "issuing_country": "US",
+    "id_number": "ID-246810121",
+    "full_name": "Jordan Miller",
+    "first_name": "Jordan",
+    "last_name": "Miller",
+    "date_of_birth": "1987-08-12",
+    "gender": "M",
+    "date_of_issue": "2021-06-18",
+    "date_of_expiry": "2031-06-17",
+    "address_on_id": {
+        "line1": "45 Oakridge Court",
+        "line2": "Unit 9",
+        "city": "Reno",
+        "state": "NV",
+        "postal_code": "89502",
+        "country": "US"
+    },
+    "mrz_data": null,
+    "raw_ocr_confidence": 0.95,
+    "source_file_name": "jordan_miller_id_front.jpg"
+}
+

@@ -1,0 +1,24 @@
+{
+    "document_type": "NATIONAL_ID",
+    "issuing_country": "US",
+    "id_number": "ID-864202468",
+    "full_name": "Elena Santiago",
+    "first_name": "Elena",
+    "last_name": "Santiago",
+    "date_of_birth": "1985-11-21",
+    "gender": "F",
+    "date_of_issue": "2019-08-05",
+    "date_of_expiry": "2029-08-04",
+    "address_on_id": {
+        "line1": "18 Seaview Terrace",
+        "line2": "",
+        "city": "San Diego",
+        "state": "CA",
+        "postal_code": "92130",
+        "country": "US"
+    },
+    "mrz_data": null,
+    "raw_ocr_confidence": 0.98,
+    "source_file_name": "elena_santiago_id_front.jpg"
+}
+
