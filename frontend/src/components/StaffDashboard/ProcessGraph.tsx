@@ -22,7 +22,6 @@ import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import RouteIcon from '@mui/icons-material/Route';
-import ViewAgendaIcon from '@mui/icons-material/ViewAgenda';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
 import { type SimulationStatusMap } from './simulation';
@@ -486,8 +485,8 @@ const ProcessGraph = ({ onNodeClick, statuses, activeStep, viewMode, isSimulatio
     const isMdDown = useMediaQuery(theme.breakpoints.down('md'));
     const isSmDown = useMediaQuery(theme.breakpoints.down('sm'));
     const reactFlowInstance = useReactFlow();
-    const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>([]);
-    const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
+    const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
     const preferenceKey = 'workflow-preferences-underwriting';
 
