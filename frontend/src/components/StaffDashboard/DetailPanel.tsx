@@ -49,12 +49,21 @@ const DetailPanel = ({ selectedNode, application, logs, activeStep }: DetailPane
         severity: 'success',
     });
     const [confirmAction, setConfirmAction] = useState<'reject' | 'hold' | null>(null);
+    const [assignee, setAssignee] = useState<string>('Unassigned');
 
+    const nodeData = selectedNode?.data as any;
     const details = selectedNode ? (nodeDetails[selectedNode.id] || {
         description: `Details for ${selectedNode.data.label}`,
         details: [],
         logs: [],
     }) : null;
+    const slaLabel = nodeData?.meta?.sla ?? '—';
+    const ownerLabel = nodeData?.meta?.owner ?? 'Unassigned';
+    const isActiveNode = selectedNode ? activeStep === selectedNode.id : false;
+    const statusLabel = nodeData?.status as string | undefined;
+    const lastLog = logs.length > 0 ? logs[logs.length - 1] : 'No recent activity yet';
+    const isAtRisk = statusLabel === 'in-progress' && isActiveNode;
+    const isExceptionNode = selectedNode ? ['reject', 'manual', 'compliance', 'hold'].some((token) => selectedNode.id.includes(token)) : false;
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -126,7 +135,14 @@ const DetailPanel = ({ selectedNode, application, logs, activeStep }: DetailPane
         setConfirmAction(null);
     };
 
+    const handleAssign = (who: string) => {
+        setAssignee(who);
+        setLocalActions((prev) => [...prev, `Action: Assigned to ${who}`]);
+        setToast({ open: true, message: `Assigned to ${who}`, severity: 'info' });
+    };
+
     const combinedLogs = [...logs, ...localActions].slice(-25).reverse();
+    const auditSnippet = combinedLogs.slice(0, 3);
 
     return (
         <Paper elevation={0} sx={{ height: '100%', overflowY: 'auto' }}>
@@ -204,28 +220,53 @@ const DetailPanel = ({ selectedNode, application, logs, activeStep }: DetailPane
                         <Typography variant="h6" gutterBottom>
                             {selectedNode.data.label as string}
                         </Typography>
-                        <Chip
-                            label={selectedNode.data.status as string || 'Unknown'}
-                            color={getStatusColor(selectedNode.data.status as string)}
-                            size="small"
-                            sx={{ mb: 2 }}
-                        />
+                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" sx={{ mb: 1.5 }}>
+                            <Chip
+                                label={statusLabel || 'Unknown'}
+                                color={getStatusColor(statusLabel || '')}
+                                size="small"
+                            />
+                            <Chip label={`Owner: ${ownerLabel}`} size="small" variant="outlined" />
+                            <Chip label={`Assignee: ${assignee}`} size="small" variant="outlined" />
+                            <Chip label={`SLA ${slaLabel}`} size="small" sx={{ bgcolor: '#eef2ff' }} />
+                            <Chip label={`Phase: ${nodeData?.meta?.phase ?? '—'}`} size="small" variant="outlined" />
+                            <Chip
+                                label={nodeData?.meta?.role === 'automation' ? 'Automation' : 'Manual'}
+                                size="small"
+                                color={nodeData?.meta?.role === 'automation' ? 'info' : 'warning'}
+                                variant="outlined"
+                            />
+                            {isExceptionNode && <Chip label="Exception path" color="error" size="small" variant="outlined" />}
+                            {isAtRisk && <Chip label="SLA watch" color="warning" size="small" variant="outlined" />}
+                        </Stack>
                         <Typography variant="body2" color="text.secondary">
                             {details.description}
                         </Typography>
-                        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-                            <Button variant="contained" color="success" size="small" onClick={() => addLocalAction('Approve step')}>
-                                Approve
-                            </Button>
-                            <Button variant="outlined" color="error" size="small" onClick={() => setConfirmAction('reject')}>
-                                Reject
-                            </Button>
-                            <Button variant="outlined" color="warning" size="small" onClick={() => setConfirmAction('hold')}>
-                                Hold
-                            </Button>
-                            <Button variant="outlined" size="small" onClick={() => addLocalAction('Request document')}>
-                                Request Doc
-                            </Button>
+                    <Typography variant="caption" color="text.secondary">
+                        Last action: {lastLog}
+                    </Typography>
+                    <Stack direction="row" spacing={1} sx={{ mt: 2 }} flexWrap="wrap">
+                        <Button variant="contained" color="success" size="small" onClick={() => addLocalAction('Approve step')}>
+                            Approve
+                        </Button>
+                        <Button variant="outlined" color="secondary" size="small" onClick={() => addLocalAction('Override path')}>
+                            Override
+                        </Button>
+                        <Button variant="outlined" color="warning" size="small" onClick={() => setConfirmAction('hold')}>
+                            Hold
+                        </Button>
+                        <Button variant="outlined" color="error" size="small" onClick={() => setConfirmAction('reject')}>
+                            Reject
+                        </Button>
+                        <Button variant="outlined" size="small" onClick={() => addLocalAction('Request document')}>
+                            Request Doc
+                        </Button>
+                        <Button variant="outlined" size="small" onClick={() => handleAssign('You')}>
+                            Assign to me
+                        </Button>
+                        <Button variant="outlined" size="small" onClick={() => handleAssign('Ops Queue')}>
+                            Reassign
+                        </Button>
                         </Stack>
                     </Box>
 
@@ -243,6 +284,42 @@ const DetailPanel = ({ selectedNode, application, logs, activeStep }: DetailPane
                             </List>
                         </Box>
                     )}
+                <Box sx={{ p: 3, borderTop: '1px solid #f0f0f0' }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        Documents & Controls
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" sx={{ mb: 1 }}>
+                        <Chip label={`Owner: ${ownerLabel}`} size="small" variant="outlined" />
+                        <Chip label={`Assignee: ${assignee}`} size="small" variant="outlined" />
+                        <Chip label={`SLA ${slaLabel}`} size="small" sx={{ bgcolor: '#eef2ff' }} />
+                    </Stack>
+                    <Stack spacing={0.75}>
+                        {application && Object.entries(application.files).map(([key, path]) => (
+                            <Stack key={key} direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+                                <Stack spacing={0.25}>
+                                    <Typography variant="body2" fontWeight={700}>{key.toUpperCase()}</Typography>
+                                    <Typography variant="caption" color="text.secondary">{path}</Typography>
+                                </Stack>
+                                <Button size="small" variant="outlined" onClick={() => addLocalAction(`Opened document ${key}`)}>
+                                    Open
+                                </Button>
+                            </Stack>
+                        ))}
+                        {!application && (
+                            <Typography variant="body2" color="text.secondary">No documents available for this application.</Typography>
+                        )}
+                    </Stack>
+                    {details.logs && details.logs.length > 0 && (
+                        <Stack spacing={0.5} sx={{ mt: 1.5 }}>
+                            <Typography variant="subtitle2">Compliance notes</Typography>
+                            {details.logs.slice(-3).map((log: string, idx: number) => (
+                                <Typography key={log + idx} variant="caption" color="text.secondary">
+                                    • {log}
+                                </Typography>
+                            ))}
+                        </Stack>
+                    )}
+                </Box>
                 </>
             )}
 
@@ -268,6 +345,14 @@ const DetailPanel = ({ selectedNode, application, logs, activeStep }: DetailPane
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>
                     Activity Timeline
                 </Typography>
+                <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mb: 1 }}>
+                    {auditSnippet.length === 0 && (
+                        <Chip label="No activity yet" size="small" variant="outlined" />
+                    )}
+                    {auditSnippet.map((entry, idx) => (
+                        <Chip key={entry + idx} label={entry} size="small" variant="outlined" />
+                    ))}
+                </Stack>
                 <List dense sx={{ bgcolor: '#f5f5f5', borderRadius: 1, maxHeight: 260, overflowY: 'auto' }}>
                     {combinedLogs.length === 0 && (
                         <ListItem>

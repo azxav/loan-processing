@@ -16,12 +16,14 @@ import {
     Chip,
     Tabs,
     Tab,
-    Divider,
     Grid,
     LinearProgress,
     Snackbar,
     Alert,
     CircularProgress,
+    ToggleButtonGroup,
+    ToggleButton,
+    Collapse,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -29,6 +31,8 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import ShieldIcon from '@mui/icons-material/Shield';
 import DescriptionIcon from '@mui/icons-material/Description';
 import StorageIcon from '@mui/icons-material/Storage';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { type Node, ReactFlowProvider } from '@xyflow/react';
 import ProcessGraph from './ProcessGraph';
 import DetailPanel from './DetailPanel';
@@ -54,6 +58,8 @@ const StaffDashboard = () => {
         message: '',
         severity: 'info',
     });
+    const [viewMode, setViewMode] = useState<'business' | 'technical'>('business');
+    const [showDetails, setShowDetails] = useState<boolean>(false);
     const location = useLocation();
     const cancelRef = useRef<(() => void) | null>(null);
     const timerRef = useRef<number | null>(null);
@@ -231,8 +237,8 @@ const StaffDashboard = () => {
             'income-analysis': 'Risk',
             'debt-assessment': 'Risk',
             'compliance-check': 'Risk',
-            'report-generation': 'Decision Prep',
-            'routing-decision': 'Decision Prep',
+            'report-generation': 'Decision',
+            'routing-decision': 'Decision',
             'auto-approve': 'Decision',
             'manual-review': 'Decision',
             'auto-reject': 'Decision',
@@ -244,17 +250,32 @@ const StaffDashboard = () => {
         return stageMap[activeStep] ?? 'In Progress';
     }, [activeStep]);
 
-    const headerStats = useMemo(() => {
+    const phaseNames: string[] = ['Intake', 'Verification', 'Risk', 'Decision', 'Funding'];
+
+    const currentPhaseIndex = useMemo(() => {
+        const idx = phaseNames.indexOf(stageLabel);
+        return idx >= 0 ? idx : 0;
+    }, [phaseNames, stageLabel]);
+
+    const keyMetrics = useMemo(() => {
         if (!selectedApp) return [];
         return [
             { label: 'Amount', value: formatCurrency(selectedApp.requestedAmount) },
-            { label: 'Term', value: `${selectedApp.termMonths} mo` },
-            { label: 'DTI', value: formatPercent(selectedApp.dti) },
-            { label: 'Credit Score', value: selectedApp.creditScore },
-            { label: 'Owner', value: activeOwner },
+            { label: 'Risk Score', value: riskScore },
             { label: 'Stage', value: stageLabel },
+            {
+                label: 'SLA',
+                value: `${Math.min(99, Math.round((elapsedMs / (15 * 60 * 1000)) * 100))}%`,
+            },
         ];
-    }, [selectedApp, activeOwner, stageLabel]);
+    }, [elapsedMs, riskScore, selectedApp, stageLabel]);
+
+    const overallProgress = useMemo(() => {
+        const values = Object.values(statuses);
+        if (values.length === 0) return 0;
+        const completed = values.filter((s) => s === 'completed').length;
+        return Math.min(100, Math.round((completed / values.length) * 100));
+    }, [statuses]);
 
     const statusColor = (statusLabel?: SampleApplication['statusLabel']) => {
         switch (statusLabel) {
@@ -305,113 +326,125 @@ const StaffDashboard = () => {
             <Paper
                 elevation={1}
                 sx={{
-                    p: 2.5,
+                    p: 2,
                     borderRadius: 0,
                     borderBottom: '1px solid',
                     borderColor: 'divider',
                     position: 'sticky',
                     top: 0,
-                    zIndex: 2,
+                    zIndex: 3,
                     background: theme.palette.background.paper,
                 }}
             >
-                <Stack spacing={2}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
-                        <Stack direction="row" spacing={1} alignItems="center">
-                            <Chip
-                                label="Sandbox Simulation"
-                                color="default"
-                                size="small"
-                                icon={<StorageIcon fontSize="small" />}
-                            />
-                            <Chip
-                                label={appError ? 'Mock Data' : 'Live Data'}
-                                color={appError ? 'warning' : 'success'}
-                                size="small"
-                            />
-                            <Chip
-                                label={statusColor(selectedApp?.statusLabel).label}
-                                color={statusColor(selectedApp?.statusLabel).color}
-                                size="small"
-                            />
-                            {decisionPath && (
+                <Stack spacing={1.5}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gap={1}>
+                        <Stack spacing={0.5}>
+                            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                                <Typography variant="h6">
+                                    {selectedApp?.applicantName ?? 'Applicant'} — {selectedApp?.productType?.replace(/_/g, ' ') ?? 'Product'}
+                                </Typography>
                                 <Chip
-                                    label={`Path: ${decisionPath.replace('-', ' ')}`}
-                                    color={decisionPath === 'auto-approve' ? 'success' : decisionPath === 'auto-reject' ? 'error' : 'warning'}
+                                    label={`Sandbox • ${appError ? 'Mock data' : 'Live data'}`}
+                                    color="secondary"
+                                    size="small"
+                                    icon={<StorageIcon fontSize="small" />}
+                                />
+                            </Stack>
+                            <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap">
+                                <Chip
+                                    label={statusColor(selectedApp?.statusLabel).label}
+                                    color={statusColor(selectedApp?.statusLabel).color}
                                     size="small"
                                 />
-                            )}
+                                {decisionPath && (
+                                    <Chip
+                                        label={`Path: ${decisionPath.replace('-', ' ')}`}
+                                        color={decisionPath === 'auto-approve' ? 'success' : decisionPath === 'auto-reject' ? 'error' : 'warning'}
+                                        size="small"
+                                    />
+                                )}
+                                <Chip
+                                    color="primary"
+                                    size="small"
+                                    icon={<AccessTimeIcon fontSize="small" />}
+                                    label={`Elapsed ${formattedElapsed}`}
+                                />
+                                <Chip
+                                    color="secondary"
+                                    size="small"
+                                    icon={<ShieldIcon fontSize="small" />}
+                                    label={`Risk ${riskScore}`}
+                                />
+                            </Stack>
                         </Stack>
-                        <Stack direction="row" spacing={1} alignItems="center">
+                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" justifyContent="flex-end">
+                            <ToggleButtonGroup
+                                exclusive
+                                size="small"
+                                value={viewMode}
+                                onChange={(_e, value) => value && setViewMode(value)}
+                                color="primary"
+                            >
+                                <ToggleButton value="business">Business View</ToggleButton>
+                                <ToggleButton value="technical">Technical View</ToggleButton>
+                            </ToggleButtonGroup>
                             <Button
                                 variant="outlined"
                                 size="small"
                                 startIcon={<RestartAltIcon />}
                                 onClick={restart}
                             >
-                                Restart Simulation
+                                Restart
                             </Button>
                             {loadingApps && <CircularProgress size={18} />}
                         </Stack>
                     </Stack>
 
-                    <Grid container spacing={2} alignItems="center">
-                        <Grid size={{ xs: 12, md: 4 }}>
-                            <Stack spacing={1}>
-                                <Typography variant="h6">
-                                    {selectedApp?.applicantName ?? 'Applicant'} — {selectedApp?.productType?.replace(/_/g, ' ') ?? 'Product'}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    {selectedApp?.summary ?? 'Case details will appear once loaded.'}
-                                </Typography>
-                                <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-                                    <Chip
-                                        color="primary"
-                                        size="small"
-                                        icon={<AccessTimeIcon fontSize="small" />}
-                                        label={`Elapsed ${formattedElapsed}`}
-                                    />
-                                    <Chip
-                                        color="secondary"
-                                        size="small"
-                                        icon={<ShieldIcon fontSize="small" />}
-                                        label={`Risk Score ${riskScore}`}
-                                    />
-                                </Stack>
+                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                        {keyMetrics.map((metric) => (
+                            <Paper
+                                key={metric.label}
+                                variant="outlined"
+                                sx={{
+                                    px: 1.5,
+                                    py: 1,
+                                    borderRadius: 1.5,
+                                    minWidth: 140,
+                                    bgcolor: 'background.default',
+                                }}
+                            >
+                                <Typography variant="caption" color="text.secondary">{metric.label}</Typography>
+                                <Typography variant="subtitle1" fontWeight={700}>{metric.value}</Typography>
+                            </Paper>
+                        ))}
+                        <Paper
+                            variant="outlined"
+                            sx={{
+                                px: 1.5,
+                                py: 1,
+                                borderRadius: 1.5,
+                                minWidth: 140,
+                                bgcolor: 'background.default',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 0.5,
+                            }}
+                        >
+                            <Stack direction="row" spacing={0.5} alignItems="center">
+                                <DescriptionIcon fontSize="small" color="action" />
+                                <Typography variant="caption" color="text.secondary">SLA Target</Typography>
                             </Stack>
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 8 }}>
-                            <Grid container spacing={2}>
-                                {headerStats.map((stat) => (
-                                    <Grid size={{ xs: 6, sm: 4, md: 4, lg: 2 }} key={stat.label}>
-                                        <Stack spacing={0.5}>
-                                            <Typography variant="caption" color="text.secondary">{stat.label}</Typography>
-                                            <Typography variant="subtitle1" fontWeight={700}>{stat.value}</Typography>
-                                        </Stack>
-                                    </Grid>
-                                ))}
-                                <Grid size={{ xs: 12, sm: 4, md: 4, lg: 2 }}>
-                                    <Stack spacing={0.5}>
-                                        <Typography variant="caption" color="text.secondary">SLA Target</Typography>
-                                        <Stack direction="row" spacing={0.5} alignItems="center">
-                                            <DescriptionIcon fontSize="small" color="action" />
-                                            <Typography variant="subtitle1" fontWeight={700}>15:00</Typography>
-                                        </Stack>
-                                        <LinearProgress
-                                            variant="determinate"
-                                            value={Math.min(100, (elapsedMs / (15 * 60 * 1000)) * 100)}
-                                            sx={{ height: 6, borderRadius: 999 }}
-                                        />
-                                    </Stack>
-                                </Grid>
-                            </Grid>
-                        </Grid>
-                    </Grid>
+                            <Typography variant="subtitle1" fontWeight={700}>15:00</Typography>
+                            <LinearProgress
+                                variant="determinate"
+                                value={Math.min(100, (elapsedMs / (15 * 60 * 1000)) * 100)}
+                                sx={{ height: 6, borderRadius: 999 }}
+                            />
+                        </Paper>
+                    </Stack>
 
-                    <Divider />
-
-                    <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-                        <FormControl size="small" sx={{ minWidth: 240 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                        <FormControl size="small" sx={{ minWidth: 220 }}>
                             <InputLabel id="app-select-label">Select Application</InputLabel>
                             <Select
                                 labelId="app-select-label"
@@ -425,9 +458,69 @@ const StaffDashboard = () => {
                                 ))}
                             </Select>
                         </FormControl>
-                        <Chip label={`Channel: ${selectedApp?.channel ?? 'N/A'}`} size="small" />
-                        <Chip label={`Purpose: ${selectedApp?.purpose ?? 'N/A'}`} size="small" />
+                        <Chip label={`Owner: ${activeOwner}`} size="small" variant="outlined" />
+                        <Button
+                            size="small"
+                            variant="text"
+                            startIcon={showDetails ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                            onClick={() => setShowDetails((prev) => !prev)}
+                        >
+                            {showDetails ? 'Hide details' : 'More details'}
+                        </Button>
                     </Stack>
+                    <Collapse in={showDetails} unmountOnExit>
+                        <Stack direction="row" spacing={0.75} flexWrap="wrap">
+                            <Chip label={`Channel: ${selectedApp?.channel ?? 'N/A'}`} size="small" />
+                            <Chip label={`Purpose: ${selectedApp?.purpose ?? 'N/A'}`} size="small" />
+                            <Chip label={`Term: ${selectedApp?.termMonths ?? '—'} mo`} size="small" />
+                            <Chip label={`DTI: ${selectedApp ? formatPercent(selectedApp.dti) : '—'}`} size="small" />
+                            <Chip label={`Credit: ${selectedApp?.creditScore ?? '—'}`} size="small" />
+                        </Stack>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            {selectedApp?.summary ?? 'Case details will appear once loaded.'}
+                        </Typography>
+                    </Collapse>
+
+                    <Box
+                        sx={{
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1.5,
+                            p: 1.25,
+                            bgcolor: theme.palette.background.default,
+                            position: 'sticky',
+                            top: 0,
+                            zIndex: 4,
+                        }}
+                    >
+                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" justifyContent="space-between">
+                            <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap">
+                                <Chip
+                                    label={`Stage ${currentPhaseIndex + 1} of ${phaseNames.length}`}
+                                    color="primary"
+                                    size="small"
+                                />
+                                <Chip
+                                    label={`Active: ${activeStep ? activeStep.replace(/-/g, ' ') : 'None'}`}
+                                    color={activeStep ? 'warning' : 'default'}
+                                    size="small"
+                                />
+                                <Chip
+                                    label={`Owner: ${activeOwner}`}
+                                    size="small"
+                                    variant="outlined"
+                                />
+                            </Stack>
+                            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                                <Typography variant="caption" color="text.secondary">Overall</Typography>
+                                <LinearProgress
+                                    variant="determinate"
+                                    value={overallProgress}
+                                    sx={{ height: 8, borderRadius: 999, minWidth: 140 }}
+                                />
+                            </Stack>
+                        </Stack>
+                    </Box>
                 </Stack>
             </Paper>
 
@@ -464,7 +557,7 @@ const StaffDashboard = () => {
                         </Tabs>
                     </Paper>
 
-                    <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2.5 }}>
+                    <Box sx={{ flexGrow: 1, overflow: 'auto', p: activeTab === 'workflow' ? 0 : 2.5 }}>
                         {activeTab === 'overview' && (
                             <Stack spacing={2}>
                                 <Paper sx={{ p: 2 }}>
@@ -493,11 +586,17 @@ const StaffDashboard = () => {
                         )}
 
                         {activeTab === 'workflow' && (
-                            <Paper sx={{ height: '100%', p: 1, minHeight: 560, display: 'flex', flexDirection: 'column' }}>
+                            <Box sx={{ minHeight: '600px', height: '100%', width: '100%', display: 'flex', flexDirection: 'column' }}>
                                 <ReactFlowProvider>
-                                    <ProcessGraph onNodeClick={handleNodeClick} statuses={statuses} activeStep={activeStep} />
+                                    <ProcessGraph
+                                        onNodeClick={handleNodeClick}
+                                        statuses={statuses}
+                                        activeStep={activeStep}
+                                        viewMode={viewMode}
+                                        isSimulation
+                                    />
                                 </ReactFlowProvider>
-                            </Paper>
+                            </Box>
                         )}
 
                         {activeTab === 'documents' && (
