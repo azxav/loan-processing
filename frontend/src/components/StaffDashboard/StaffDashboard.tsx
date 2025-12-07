@@ -29,7 +29,7 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import ShieldIcon from '@mui/icons-material/Shield';
 import DescriptionIcon from '@mui/icons-material/Description';
 import StorageIcon from '@mui/icons-material/Storage';
-import { type Node } from '@xyflow/react';
+import { type Node, ReactFlowProvider } from '@xyflow/react';
 import ProcessGraph from './ProcessGraph';
 import DetailPanel from './DetailPanel';
 import { createSimulation, initialStatuses, type SimulationStatusMap } from './simulation';
@@ -494,7 +494,9 @@ const StaffDashboard = () => {
 
                         {activeTab === 'workflow' && (
                             <Paper sx={{ height: '100%', p: 1, minHeight: 560, display: 'flex', flexDirection: 'column' }}>
-                                <ProcessGraph onNodeClick={handleNodeClick} statuses={statuses} activeStep={activeStep} />
+                                <ReactFlowProvider>
+                                    <ProcessGraph onNodeClick={handleNodeClick} statuses={statuses} activeStep={activeStep} />
+                                </ReactFlowProvider>
                             </Paper>
                         )}
 
